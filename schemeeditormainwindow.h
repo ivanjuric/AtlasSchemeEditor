@@ -1,6 +1,7 @@
 #ifndef SCHEMEEDITORMAINWINDOW_H
 #define SCHEMEEDITORMAINWINDOW_H
 
+#include <QGraphicsView>
 #include <QMainWindow>
 
 namespace Ui {
@@ -17,6 +18,8 @@ public:
 
 private:
     Ui::SchemeEditorMainWindow *ui;
+    QGraphicsView *view;
+    QGraphicsScene *scene;
 };
 
 #endif // SCHEMEEDITORMAINWINDOW_H

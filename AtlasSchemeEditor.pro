@@ -13,8 +13,18 @@ TEMPLATE = app
 
 
 SOURCES += main.cpp\
-        schemeeditormainwindow.cpp
+        schemeeditormainwindow.cpp \
+    basecomponent.cpp \
+    pin.cpp \
+    connection.cpp \
+    guibasecomponent.cpp \
+    graphwidget.cpp
 
-HEADERS  += schemeeditormainwindow.h
+HEADERS  += schemeeditormainwindow.h \
+    basecomponent.h \
+    pin.h \
+    connection.h \
+    guibasecomponent.h \
+    graphwidget.h
 
 FORMS    += schemeeditormainwindow.ui
