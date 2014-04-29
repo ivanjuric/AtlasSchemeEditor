@@ -3,6 +3,10 @@
 
 #include <QGraphicsView>
 #include <QMainWindow>
+#include <QDockWidget>
+#include <QFile>
+#include <QJsonDocument>
+#include <QJsonObject>
 
 namespace Ui {
 class SchemeEditorMainWindow;
@@ -16,7 +20,12 @@ public:
     explicit SchemeEditorMainWindow(QWidget *parent = 0);
     ~SchemeEditorMainWindow();
 
+
+public slots:
+    void selectLibrary();
+
 private:
+    void createActions();
     Ui::SchemeEditorMainWindow *ui;
     QGraphicsView *view;
     QGraphicsScene *scene;

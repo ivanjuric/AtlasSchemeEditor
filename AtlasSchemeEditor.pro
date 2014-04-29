@@ -18,13 +18,19 @@ SOURCES += main.cpp\
     pin.cpp \
     connection.cpp \
     guibasecomponent.cpp \
-    graphwidget.cpp
+    graphwidget.cpp \
+    libraryfile.cpp \
+    processor.cpp \
+    memory.cpp
 
 HEADERS  += schemeeditormainwindow.h \
     basecomponent.h \
     pin.h \
     connection.h \
     guibasecomponent.h \
-    graphwidget.h
+    graphwidget.h \
+    libraryfile.h \
+    processor.h \
+    memory.h
 
 FORMS    += schemeeditormainwindow.ui
