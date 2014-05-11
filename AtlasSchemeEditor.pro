@@ -14,23 +14,26 @@ TEMPLATE = app
 
 SOURCES += main.cpp\
         schemeeditormainwindow.cpp \
-    basecomponent.cpp \
-    pin.cpp \
-    connection.cpp \
-    guibasecomponent.cpp \
-    graphwidget.cpp \
     libraryfile.cpp \
-    processor.cpp \
-    memory.cpp
+    editorgraphicsview.cpp \
+    componentmodel.cpp \
+    componentview.cpp \
+    visualcomponentelement.cpp \
+    visualrectangle.cpp \
+    visualtext.cpp \
+    visualcircle.cpp
 
 HEADERS  += schemeeditormainwindow.h \
-    basecomponent.h \
-    pin.h \
-    connection.h \
-    guibasecomponent.h \
-    graphwidget.h \
     libraryfile.h \
-    processor.h \
-    memory.h
+    editorgraphicsview.h \
+    componentmodel.h \
+    componentview.h \
+    visualcomponentelement.h \
+    visualrectangle.h \
+    visualtext.h \
+    visualcircle.h
 
 FORMS    += schemeeditormainwindow.ui
+
+RESOURCES += \
+    images.qrc

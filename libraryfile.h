@@ -1,6 +1,7 @@
 #include <QString>
 #include <QVector>
-#include "basecomponent.h"
+#include "componentview.h"
+#include "componentmodel.h"
 
 #ifndef LIBRARYFILE_H
 #define LIBRARYFILE_H
@@ -9,11 +10,12 @@ class LibraryFile
 {
 public:
     LibraryFile(QString filepath);
+    ComponentModel* GetComponentByUniqueId(int id);
 
     // Properties
     QString libraryName;
     QString libraryInfo;
-    QVector<BaseComponent*> componentList;
+    QVector<ComponentModel*> componentList;
 
 private:
     bool loadJson(QString filepath);
