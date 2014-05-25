@@ -1,3 +1,4 @@
+#include "pinview.h"
 #include "visualcomponentelement.h"
 
 #include <QString>
@@ -13,13 +14,20 @@ public:
 
     // Unique instance identificator
     int uid;
-    // Component type unique id
     QString id;
-    // Component title
     QString title;
+    QString instanceNameBase;
+    QString iconFile;
+    QString tooltip;
+    int minInstances;
+    int maxInstances;
+    QString comdelFile;
 
     // Ordered list of visual elements used for component display
     QVector<VisualComponentElement*> visualElements;
+
+    // List of visual pins
+    QVector<PinView*> visualPins;
 };
 
 #endif // COMPONENTMODEL_H

@@ -4,6 +4,7 @@
 #include "componentview.h"
 #include "editorgraphicsview.h"
 #include "libraryfile.h"
+#include "connection.h"
 
 #include <QGraphicsView>
 #include <QMainWindow>
@@ -25,6 +26,8 @@ public:
     explicit SchemeEditorMainWindow(QWidget *parent = 0);
     ~SchemeEditorMainWindow();
 
+    bool eventFilter(QObject *, QEvent *);
+
 
 public slots:
     void selectLibrary();
@@ -36,12 +39,15 @@ signals:
 private:
     void createActions();
     bool isComponentInScene(int uid);
+    QGraphicsItem *itemAt(const QPointF&);
 
     QSignalMapper *signalMapper;
     LibraryFile *library;
 
     Ui::SchemeEditorMainWindow *ui;
     QGraphicsScene *scene;
+
+    Connection *conn;
 };
 
 #endif // SCHEMEEDITORMAINWINDOW_H

@@ -4,19 +4,20 @@
 
 #include <QFileDialog>
 #include <QToolButton>
+#include <QGraphicsSceneMouseEvent>
 
 SchemeEditorMainWindow::SchemeEditorMainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::SchemeEditorMainWindow)
 {
+    conn = 0;
     ui->setupUi(this);
-
-
 
     createActions();
 
     /// Create new Scene add initial components to it
     scene = new QGraphicsScene();
+    scene->installEventFilter(this);
     ui->graphicsView->setScene(scene);
 
     QString filePath = "C:\\Users\\Ivan\\Desktop\\FRISC_LIBRARY_SIMPLE.json";
@@ -46,7 +47,7 @@ void SchemeEditorMainWindow::selectLibrary()
 
     LibraryFile* library = new LibraryFile(fileName);
 
-    this->setWindowTitle(library->libraryName);
+    this->setWindowTitle(library->libraryTitle);
 }
 
 // Podesavanje menija i toolbara
@@ -73,6 +74,12 @@ void SchemeEditorMainWindow::AddComponentToScene(int id){
 
     scene->addItem(c);
 
+    foreach(PinView *pin, c->model->visualPins){
+        pin->setPos(QPoint(100, 0));
+        pin->setFlag(QGraphicsItem::ItemIsMovable,false);
+        pin->setParentItem(c);
+    }
+
 
 }
 
@@ -81,12 +88,10 @@ bool SchemeEditorMainWindow::isComponentInScene(int uid)
 {
     QList<QGraphicsItem*> items = scene->items();
     for(int i = 0; i < items.length(); i++){
-        //Component *c = dynamic_cast<Component*>(items[i]);
-        ComponentView *c = (ComponentView*)items[i];
-        if(c){
-            if(c->model->uid == uid)
-                return true;
-        }
+        ComponentView *c = dynamic_cast<ComponentView*>(items[i]);
+        //ComponentView *c = (ComponentView*)items[i];
+        if(c && c->model && c->model->uid && c->model->uid == uid)
+            return true;
     }
     return false;
 }
@@ -94,4 +99,98 @@ bool SchemeEditorMainWindow::isComponentInScene(int uid)
 SchemeEditorMainWindow::~SchemeEditorMainWindow()
 {
     delete ui;
+}
+
+QGraphicsItem* SchemeEditorMainWindow::itemAt(const QPointF &pos)
+{
+    QList<QGraphicsItem*> items = scene->items(QRectF(pos - QPointF(1,1), QSize(3,3)));
+
+    foreach(QGraphicsItem *item, items)
+        if (item->type() > QGraphicsItem::UserType)
+            return item;
+
+    return 0;
+}
+
+bool SchemeEditorMainWindow::eventFilter(QObject *o, QEvent *e)
+{
+    QGraphicsSceneMouseEvent *me = (QGraphicsSceneMouseEvent*) e;
+
+    switch ((int) e->type())
+    {
+        case QEvent::GraphicsSceneMousePress:
+        {
+            switch ((int) me->button())
+            {
+                case Qt::LeftButton:
+                {
+                    QGraphicsItem *item = itemAt(me->scenePos());
+                    if (item && item->type() == PinView::Type)
+                    {
+                        conn = new Connection(0);
+                        scene->addItem(conn);
+                        conn->setPin1((PinView*) item);
+                        conn->setPos1(item->scenePos());
+                        conn->setPos2(me->scenePos());
+                        conn->updatePath();
+
+                        return true;
+                    }
+                    else if (item && item->type() == ComponentView::Type)
+                    {
+                        /* if (selBlock)
+                            selBlock->setSelected(); */
+                        // selBlock = (QNEBlock*) item;
+                    }
+                    break;
+                }
+                case Qt::RightButton:
+                {
+                    QGraphicsItem *item = itemAt(me->scenePos());
+                    if (item && (item->type() == Connection::Type || item->type() == ComponentView::Type))
+                        delete item;
+                    // if (selBlock == (QNEBlock*) item)
+                        // selBlock = 0;
+                    break;
+                }
+            }
+        }
+        case QEvent::GraphicsSceneMouseMove:
+        {
+            if (conn)
+            {
+                conn->setPos2(me->scenePos());
+                conn->updatePath();
+                return true;
+            }
+            break;
+        }
+        case QEvent::GraphicsSceneMouseRelease:
+        {
+            if (conn && me->button() == Qt::LeftButton)
+            {
+                QGraphicsItem *item = itemAt(me->scenePos());
+                if (item && item->type() == PinView::Type)
+                {
+                    PinView *pin1 = conn->pin1();
+                    PinView *pin2 = (PinView*) item;
+
+                    if (pin1->component() != pin2->component()  && !pin1->isConnected(pin2))
+                    {
+                        conn->setPos2(pin2->scenePos());
+                        conn->setPin2(pin2);
+                        conn->updatePath();
+                        conn = 0;
+                        return true;
+                    }
+                }
+
+                delete conn;
+                conn = 0;
+                return true;
+            }
+            break;
+        }
+    }
+    return QObject::eventFilter(o, e);
 }

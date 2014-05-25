@@ -9,6 +9,7 @@ public:
     VisualCircle(int x, int y, QColor color);
     int radius;
     QColor fillColor;
+    int lineThickness;
 };
 
 #endif // VISUALCIRCLE_H

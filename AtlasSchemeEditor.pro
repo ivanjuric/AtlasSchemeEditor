@@ -21,7 +21,15 @@ SOURCES += main.cpp\
     visualcomponentelement.cpp \
     visualrectangle.cpp \
     visualtext.cpp \
-    visualcircle.cpp
+    visualcircle.cpp \
+    pinview.cpp \
+    addressspace.cpp \
+    messages.cpp \
+    connection.cpp \
+    bus.cpp \
+    busline.cpp \
+    regularbus.cpp \
+    automaticbus.cpp
 
 HEADERS  += schemeeditormainwindow.h \
     libraryfile.h \
@@ -31,7 +39,15 @@ HEADERS  += schemeeditormainwindow.h \
     visualcomponentelement.h \
     visualrectangle.h \
     visualtext.h \
-    visualcircle.h
+    visualcircle.h \
+    pinview.h \
+    addressspace.h \
+    messages.h \
+    connection.h \
+    bus.h \
+    busline.h \
+    regularbus.h \
+    automaticbus.h
 
 FORMS    += schemeeditormainwindow.ui
 

@@ -27,20 +27,67 @@ bool LibraryFile::loadJson(QString filepath){
     QString data = file.readAll();
     QJsonDocument doc(QJsonDocument::fromJson(data.toUtf8()));
 
-    QJsonObject jsonObject = doc.object();
+    // Get JSON root object
+    QJsonObject root = doc.object();
 
-    libraryName = jsonObject["libraryName"].toString();
-    libraryInfo = jsonObject["libraryInfo"].toString();
+    // Load basic information
+    libraryTitle = root["libraryTitle"].toString();
+    libraryInfo = root["libraryInfo"].toString();
+    comdelDirectory = root["comdelDirectory"].toString();
+    loadComdelHeader(root["comdelHeader"].toArray());
 
-    QJsonArray components = jsonObject["componentList"].toArray();
+    // Load list of address spaces
+    loadAddressSpaceList(root["addressSpaceList"].toArray());
 
-    // Generate random id for components
-    int randId = rand();
-    foreach (QJsonValue val, components){
-        QJsonObject obj = val.toObject();
+    // Load messages
+    loadMessages(root["messages"].toObject());
+
+
+    // Generate random id for components and buses
+    randId = rand();
+
+    // Load all components and its children
+    loadComponents(root["componentList"].toArray());
+
+
+
+
+    return true;
+}
+
+void LibraryFile::loadComdelHeader(QJsonArray headerLines){
+    foreach (QJsonValue line, headerLines){
+        comdelHeader.append(line.toString());
+    }
+}
+void LibraryFile::loadAddressSpaceList(QJsonArray addressSpaces){
+    foreach (QJsonValue adr, addressSpaces){
+        QJsonObject obj = adr.toObject();
+
+        AddressSpace *addressSpace = new AddressSpace();
+        addressSpace->id = obj["ID"].toString();
+        addressSpace->min = obj["min"].toString();
+        addressSpace->max = obj["max"].toString();
+
+        addressSpaceList.append(addressSpace);
+    }
+}
+
+void LibraryFile::loadMessages(QJsonObject messagesObj){
+    messages.OK = messagesObj["OK"].toString();
+    messages.Yes = messagesObj["Yes"].toString();
+    messages.No = messagesObj["No"].toString();
+    messages.Cancel = messagesObj["Cancel"].toString();
+    messages.noneBusLine = messagesObj["noneBusLine"].toString();
+    messages.noneValue = messagesObj["noneValue"].toString();
+    messages.generalPinNotConnected = messagesObj["generalPinNotConnected"].toString();
+}
+
+void LibraryFile::loadComponents(QJsonArray compArray){
+    foreach (QJsonValue comp, compArray){
+        QJsonObject obj = comp.toObject();
 
         QString id = obj["ID"].toString();
-
         QString title = obj["title"].toString();
         QString tooltip = obj["tooltip"].toString();
         int minInstances = obj["minInstances"].toInt();
@@ -58,8 +105,14 @@ bool LibraryFile::loadJson(QString filepath){
         ComponentModel *c = new ComponentModel();
 
         c->uid = randId++;
-        c->id = id;
-        c->title = title;
+        c->id = obj["ID"].toString();
+        c->title = obj["title"].toString();
+        c->instanceNameBase = obj["instanceNameBase"].toString();
+        c->iconFile = obj["iconFile"].toString();
+        c->tooltip = obj["tooltip"].toString();
+        c->minInstances = obj["minInstances"].toInt();
+        c->maxInstances = obj["maxInstances"].toInt();
+        c->comdelFile = obj["comdelFile"].toString();
 
         // Load component views
         QJsonArray views = obj["view"].toArray();
@@ -74,8 +127,9 @@ bool LibraryFile::loadJson(QString filepath){
            int x = viewObject["x"].toInt();
            int y = viewObject["y"].toInt();
            // Parse main color (line or text color). Allowed formats are hex (#000000) or name ("black")
-           QString colorName = viewObject["mainColor"].toString();
-           QColor mainColor = QColor::isValidColor(colorName) ? QColor(colorName) : QColor(Qt::black);
+//           QString colorName = viewObject["mainColor"].toString();
+//           QColor mainColor = QColor::isValidColor(colorName) ? QColor(colorName) : QColor(Qt::black);
+           QColor mainColor = getColor(viewObject["mainColor"].toString());
 
            if(viewType == "rectangle"){
                VisualRectangle *rectangle = new VisualRectangle(x,y,mainColor);
@@ -88,6 +142,8 @@ bool LibraryFile::loadJson(QString filepath){
            else if(viewType == "circle"){
                VisualCircle *circle = new VisualCircle(x,y,mainColor);
                circle->radius = viewObject["radius"].toInt();
+               QString colorName = viewObject["fillColor"].toString();
+               circle->fillColor = QColor::isValidColor(colorName) ? QColor(colorName) : QColor(Qt::white);
                c->visualElements.append(circle);
            }
            else if(viewType == "text"){
@@ -97,10 +153,32 @@ bool LibraryFile::loadJson(QString filepath){
            }
         }
 
+        // Load visual pin list
+        QJsonArray visualPinList = obj["visualPinList"].toArray();
+        foreach (QJsonValue pinVal, visualPinList) {
+            QJsonObject pinObject = pinVal.toObject();
+
+            QJsonObject pinViewObject = pinObject["view"].toObject();
+
+            PinView *pin = new PinView(getColor(pinViewObject["lineColor"].toString()),pinViewObject["x"].toInt(),pinViewObject["y"].toInt(), pinViewObject["dimension"].toInt());
+
+            QString shape = pinViewObject["shape"].toString();
+            pin->setShape(shape);
+            pin->lineColorConnected = getColor(pinViewObject["lineColorConnected"].toString());
+            pin->fillColor = getColor(pinViewObject["fillColor"].toString());
+            pin->fillColorConnected = getColor(pinViewObject["fillColorConnected"].toString());
+            c->visualPins.append(pin);
+
+            pin->id = pinObject["ID"].toString();
+            pin->title = pinObject["title"].toString();
+            pin->tooltip = pinObject["tooltip"].toString();
+            pin->checkConnection = pinObject["check_connection"].toString();
+
+
+        }
+
         componentList.append(c);
     }
-
-    return true;
 }
 
 ComponentModel *LibraryFile::GetComponentByUniqueId(int uid){
@@ -109,5 +187,10 @@ ComponentModel *LibraryFile::GetComponentByUniqueId(int uid){
            return component;
     }
     return 0;
+}
+// Parse main color (line or text color). Allowed formats are hex (#000000) or name ("black")
+QColor LibraryFile::getColor(QString colorName, bool fill)
+{
+    return QColor::isValidColor(colorName) ? QColor(colorName) : (fill ? QColor(Qt::white) : QColor(Qt::black));
 }
 

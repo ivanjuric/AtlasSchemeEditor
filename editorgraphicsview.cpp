@@ -1,9 +1,11 @@
 #include "editorgraphicsview.h"
 #include <QWheelEvent>
+#include <QGraphicsSceneMouseEvent>
 
 EditorGraphicsView::EditorGraphicsView(QWidget* parent) : QGraphicsView(parent)
 {
     //setRenderHints(QPainter::Antialiasing | QPainter::SmoothPixmapTransform);
+    setRenderHints(QPainter::Antialiasing);
     //Use ScrollHand Drag Mode to enable Panning
     //setDragMode(ScrollHandDrag);
 }

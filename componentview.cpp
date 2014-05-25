@@ -17,28 +17,69 @@ ComponentView::ComponentView(int x, int y, ComponentModel *model)
     setZValue((x + y) % 2);
 
     setFlags(ItemIsSelectable | ItemIsMovable);
+
+    //set initial width and height
+    width = 100;
+    height = 100;
+
+    foreach(PinView* pin, model->visualPins)
+    {
+        pin->setComponent(this);
+    }
+}
+
+void ComponentView::setDimensions()
+{
+    int minL, minU, maxR, maxD;;
+    minL = minU = std::numeric_limits<int>::max();
+    maxR = maxD = std::numeric_limits<int>::min();
+
+    foreach (VisualComponentElement *element, this->model->visualElements) {
+        VisualRectangle *rect = dynamic_cast<VisualRectangle*>(element);
+        VisualText *text = dynamic_cast<VisualText*>(element);
+        VisualCircle *circle = dynamic_cast<VisualCircle*>(element);
+
+        if(rect){
+            if(rect->x < minL)
+                minL = rect->x;
+            if(rect->y < minU)
+                minU = rect->y;
+            if((rect->x + rect->width) > maxR)
+                maxR = rect->x + rect->width;
+            if((rect->y + rect->width) > maxD)
+                maxD = rect->y + rect->width;
+        }
+        else if(text){
+            if(text->x < minL)
+                minL = text->x;
+            if(text->y < minU)
+                minU = text->y;
+        }
+        else if(circle){
+
+        }
+    }
+
+    x = minL;
+    y = maxD;
+    width = maxR - minL;
+    height = maxD - minU;
 }
 
 QRectF ComponentView::boundingRect() const
 {
-    return QRectF(0, 0, 100, 100);
-}
-
-QPainterPath ComponentView::shape() const
-{
-    QPainterPath path;
-    path.addRect(14, 14, 100, 100);
-    return path;
+    return QRectF(x, y, width, height);
 }
 
 void ComponentView::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
 {
     Q_UNUSED(widget);
 
-
     QColor fillColor = (option->state & QStyle::State_Selected) ? color.dark(150) : color;
     if (option->state & QStyle::State_MouseOver)
          fillColor = fillColor.light(125);
+
+
 
     QPen oldPen = painter->pen();
     QPen pen = oldPen;
@@ -87,7 +128,9 @@ void ComponentView::drawVisualElement(QPainter *painter, VisualComponentElement 
 
 void ComponentView::drawVisualRectangle(QPainter *painter, VisualRectangle *rect)
 {
-    painter->setPen(rect->mainColor);
+    QPen pen(rect->mainColor);
+    pen.setJoinStyle(Qt::MiterJoin);
+    painter->setPen(pen);
     painter->setBrush(QBrush(rect->fillColor,Qt::SolidPattern));
     painter->drawRect(rect->x,rect->y,rect->width,rect->height);
 }
@@ -101,6 +144,6 @@ void ComponentView::drawVisualText(QPainter *painter, VisualText *text)
 void ComponentView::drawVisualCircle(QPainter *painter, VisualCircle *circle)
 {
     painter->setPen(circle->mainColor);
-    //painter->setBrush(QBrush(circle->fillColor, Qt::SolidPattern));
+    painter->setBrush(QBrush(circle->fillColor, Qt::SolidPattern));
     painter->drawEllipse(circle->x,circle->y,circle->radius, circle->radius);
 }
