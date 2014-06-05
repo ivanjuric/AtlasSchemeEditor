@@ -11,7 +11,11 @@
 class ComponentView : public QGraphicsItem
 {
 public:
+    ComponentView();
     ComponentView(int x, int y, ComponentModel *model);
+
+    int x, y, width, height;
+    QColor color;
 
     ComponentModel *model;
 
@@ -20,9 +24,12 @@ public:
     enum { Type = QGraphicsItem::UserType + 3 };
     int type() const { return Type; }
 
+    void save(QDataStream &ds);
+    void load(QDataStream &ds, QMap<quint64, PinView*> &pinMap);
+
 private:
-     int x, y, width, height;
-     QColor color;
+
+
      //void drawShapeToComponent(QPainter painter);
      void drawVisualElement(QPainter *painter, VisualComponentElement *visualElement);
      void drawVisualRectangle(QPainter *painter, VisualRectangle *rect);

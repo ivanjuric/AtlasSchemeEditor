@@ -28,10 +28,16 @@ public:
 
     bool eventFilter(QObject *, QEvent *);
 
+    void save(QDataStream &ds);
+    void load(QDataStream &ds);
+
 
 public slots:
     void selectLibrary();
+    void saveSceneToFile();
+    void loadSceneFromFile();
     void AddComponentToScene(int id);
+    void AddBusToScene(int id);
 
 signals:
     void clicked(int id);
@@ -39,15 +45,18 @@ signals:
 private:
     void createActions();
     bool isComponentInScene(int uid);
+    bool isBusInScene(int uid);
     QGraphicsItem *itemAt(const QPointF&);
 
     QSignalMapper *signalMapper;
+
     LibraryFile *library;
 
     Ui::SchemeEditorMainWindow *ui;
     QGraphicsScene *scene;
 
     Connection *conn;
+    void deleteItem(QGraphicsItem *item);
 };
 
 #endif // SCHEMEEDITORMAINWINDOW_H

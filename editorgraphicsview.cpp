@@ -1,3 +1,4 @@
+#include "componentview.h"
 #include "editorgraphicsview.h"
 #include <QWheelEvent>
 #include <QGraphicsSceneMouseEvent>
@@ -24,3 +25,5 @@ void EditorGraphicsView::wheelEvent(QWheelEvent* event) {
         scale(1.0 / scaleFactor, 1.0 / scaleFactor);
     }
 }
+
+

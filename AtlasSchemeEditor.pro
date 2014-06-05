@@ -29,7 +29,8 @@ SOURCES += main.cpp\
     bus.cpp \
     busline.cpp \
     regularbus.cpp \
-    automaticbus.cpp
+    automaticbus.cpp \
+    busview.cpp
 
 HEADERS  += schemeeditormainwindow.h \
     libraryfile.h \
@@ -47,7 +48,9 @@ HEADERS  += schemeeditormainwindow.h \
     bus.h \
     busline.h \
     regularbus.h \
-    automaticbus.h
+    automaticbus.h \
+    busview.h \
+    Enums.h
 
 FORMS    += schemeeditormainwindow.ui
 

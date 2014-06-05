@@ -53,8 +53,10 @@ void Connection::updatePath()
 {
     QPainterPath p;
 
-    //QPointF pos1(m_port1->scenePos());
-    //QPointF pos2(m_port2->scenePos());
+    if(pin1())
+        pos1 = pin1()->centerPos(pin1());
+    if(pin2())
+        pos2 = pin2()->centerPos(pin2());
 
     p.moveTo(pos1);
 
@@ -64,6 +66,8 @@ void Connection::updatePath()
     QPointF ctr1(pos1.x() + dx * 0.25, pos1.y() + dy * 0.1);
     QPointF ctr2(pos1.x() + dx * 0.75, pos1.y() + dy * 0.9);
 
+    ctr1.setX(ctr1.x() + 10);
+    ctr2.setX(ctr2.x() + 10);
     p.cubicTo(ctr1, ctr2, pos2);
 
     setPath(p);

@@ -9,6 +9,10 @@
 #include <QPainter>
 #include <QPoint>
 
+ComponentView::ComponentView()
+{
+}
+
 ComponentView::ComponentView(int x, int y, ComponentModel *model)
 {
     this->x = x;
@@ -146,4 +150,55 @@ void ComponentView::drawVisualCircle(QPainter *painter, VisualCircle *circle)
     painter->setPen(circle->mainColor);
     painter->setBrush(QBrush(circle->fillColor, Qt::SolidPattern));
     painter->drawEllipse(circle->x,circle->y,circle->radius, circle->radius);
+}
+
+void ComponentView::save(QDataStream &ds)
+{
+    ds << pos();
+
+    int count(0);
+
+    foreach(QGraphicsItem *pin, childItems())
+    {
+        if (pin->type() != PinView::Type)
+            continue;
+        count++;
+    }
+
+    ds << count;
+
+    foreach(QGraphicsItem *pin_, childItems())
+    {
+        if (pin_->type() != PinView::Type)
+            continue;
+
+        PinView *pin = (PinView*) pin_;
+        ds << (quint64) pin;
+        ds << pin->id;
+        ds << (int)pin->side;
+    }
+}
+
+void ComponentView::load(QDataStream &ds, QMap<quint64, PinView*> &pinMap)
+{
+    QPointF p;
+    ds >> p;
+    setPos(p);
+    int count;
+    ds >> count;
+    for (int i = 0; i < count; i++)
+    {
+        quint64 ptr;
+
+        ds >> (quint64) ptr;
+        PinView *p = (PinView*)ptr;
+        PinView *pin = new PinView();
+
+        ds >> pin->id;
+        int pinSide;
+        ds >> pinSide;
+        pin->side = (PinView::PinSideEnum)pinSide;
+
+        pinMap[ptr] = pin;
+    }
 }

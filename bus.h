@@ -7,7 +7,9 @@ class Bus
 {
 public:
     Bus();
+    QString ID;
     QVector<BusLine*> busLines;
+    int uid;
 };
 
 #endif // BUS_H

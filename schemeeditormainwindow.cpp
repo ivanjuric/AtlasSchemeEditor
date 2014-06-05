@@ -1,6 +1,7 @@
 #include "schemeeditormainwindow.h"
 #include "ui_schemeeditormainwindow.h"
 #include "libraryfile.h"
+#include "busview.h"
 
 #include <QFileDialog>
 #include <QToolButton>
@@ -27,8 +28,8 @@ SchemeEditorMainWindow::SchemeEditorMainWindow(QWidget *parent) :
     signalMapper = new QSignalMapper(this);
 
     // Fill toolbar with components actions
-    foreach(ComponentModel *component, library->componentList){
-
+    foreach(ComponentModel *component, library->componentList)
+    {
         QAction *actionAddFromToolbar = new QAction(component->id,this);
         connect(actionAddFromToolbar, SIGNAL(triggered()), signalMapper, SLOT(map()));
 
@@ -39,6 +40,18 @@ SchemeEditorMainWindow::SchemeEditorMainWindow(QWidget *parent) :
     //connect(signalMapper, SIGNAL(mapped(int)),this,SIGNAL(clicked(int)));
     connect(signalMapper, SIGNAL(mapped(int)),this,SLOT(AddComponentToScene(int)));
 
+    ui->toolBar->addSeparator();
+
+    foreach(Bus *bus, library->regularBuses)
+    {
+        QAction *actionAddFromToolbar = new QAction(bus->ID,this);
+        connect(actionAddFromToolbar, SIGNAL(triggered()), signalMapper, SLOT(map()));
+
+        signalMapper->setMapping(actionAddFromToolbar,bus->uid);
+
+        ui->toolBar->addAction(actionAddFromToolbar);
+    }
+    connect(signalMapper, SIGNAL(mapped(int)),this,SLOT(AddBusToScene(int)));
 
 }
 void SchemeEditorMainWindow::selectLibrary()
@@ -50,8 +63,67 @@ void SchemeEditorMainWindow::selectLibrary()
     this->setWindowTitle(library->libraryTitle);
 }
 
+void SchemeEditorMainWindow::saveSceneToFile()
+{
+    QString fname = QFileDialog::getSaveFileName();
+    if (fname.isEmpty())
+        return;
+
+    QFile f(fname);
+    f.open(QFile::WriteOnly);
+    QDataStream ds(&f);
+    save(ds);
+}
+void SchemeEditorMainWindow::loadSceneFromFile()
+{
+    QString fname = QFileDialog::getOpenFileName();
+    if (fname.isEmpty())
+        return;
+
+    QFile f(fname);
+    f.open(QFile::ReadOnly);
+    QDataStream ds(&f);
+    load(ds);
+}
+void SchemeEditorMainWindow::save(QDataStream &ds)
+{
+    ds << library->filePath;
+    // Save all components and its pin children
+    foreach(QGraphicsItem *item, scene->items())
+    {
+        if (item->type() == ComponentView::Type)
+        {
+            ds << item->type();
+            ((ComponentView*) item)->save(ds);
+        }
+    }
+}
+void SchemeEditorMainWindow::load(QDataStream &ds)
+{
+    scene->clear();
+    QMap<quint64, PinView*> pinMap;
+
+    QString libraryFilePath;
+    ds >> libraryFilePath;
+
+    library = new LibraryFile(libraryFilePath);
+
+    while (!ds.atEnd())
+    {
+        int type;
+        ds >> type;
+        if (type == ComponentView::Type)
+        {
+            ComponentView *component = new ComponentView();
+            scene->addItem(component);
+            component->load(ds, pinMap);
+        }
+    }
+}
+
 // Podesavanje menija i toolbara
-void SchemeEditorMainWindow::createActions(){
+void SchemeEditorMainWindow::createActions()
+{
 
 //    ui->actionSelectLibrary->setIcon(QIcon(":images/open-file-icon.png"));
 //    ui->actionSelectLibrary->setStatusTip(tr("Select library file"));
@@ -59,6 +131,12 @@ void SchemeEditorMainWindow::createActions(){
     connect(ui->actionSelectLibrary, SIGNAL(triggered()), this, SLOT(selectLibrary()));
     ui->mainToolBar->addAction(ui->actionSelectLibrary);
 
+    connect(ui->actionSave, SIGNAL(triggered()), this, SLOT(saveSceneToFile()));
+    ui->mainToolBar->addAction(ui->actionSave);
+
+
+    connect(ui->actionLoad, SIGNAL(triggered()), this, SLOT(loadSceneFromFile()));
+    ui->mainToolBar->addAction(ui->actionLoad);
 
 }
 // Add selected component to graphics scene
@@ -74,13 +152,36 @@ void SchemeEditorMainWindow::AddComponentToScene(int id){
 
     scene->addItem(c);
 
-    foreach(PinView *pin, c->model->visualPins){
-        pin->setPos(QPoint(100, 0));
+    foreach(PinView *pin, c->model->visualPins)
+    {
+        //QPointF *pos = pin->getStartPosition();
+        //pin->setPos(*pos);
+        pin->setStartPosition();
         pin->setFlag(QGraphicsItem::ItemIsMovable,false);
         pin->setParentItem(c);
     }
+}
+
+// Add selected bus to graphics scene
+void SchemeEditorMainWindow::AddBusToScene(int id)
+{
+    Bus *bus = library->GetBusByUniqueId(id);
+
+    if(bus == 0 || isBusInScene(bus->uid))
+        return;
 
 
+    // Create new component and rewrite importnant properties
+    BusView *b = new BusView(0,0,(RegularBus*)bus);
+
+    scene->addItem(b);
+
+    foreach(PinView *pin, b->busPins)
+    {
+        pin->setStartPosition();
+        pin->setFlag(QGraphicsItem::ItemIsMovable,false);
+        pin->setParentItem(b);
+    }
 }
 
 // Check if component is already attached to graphics scene
@@ -91,6 +192,18 @@ bool SchemeEditorMainWindow::isComponentInScene(int uid)
         ComponentView *c = dynamic_cast<ComponentView*>(items[i]);
         //ComponentView *c = (ComponentView*)items[i];
         if(c && c->model && c->model->uid && c->model->uid == uid)
+            return true;
+    }
+    return false;
+}
+// Check if component is already attached to graphics scene
+bool SchemeEditorMainWindow::isBusInScene(int uid)
+{
+    QList<QGraphicsItem*> items = scene->items();
+    for(int i = 0; i < items.length(); i++){
+        BusView *b = dynamic_cast<BusView*>(items[i]);
+        //ComponentView *c = (ComponentView*)items[i];
+        if(b && b->model && b->model->uid && b->model->uid == uid)
             return true;
     }
     return false;
@@ -129,8 +242,12 @@ bool SchemeEditorMainWindow::eventFilter(QObject *o, QEvent *e)
                     {
                         conn = new Connection(0);
                         scene->addItem(conn);
-                        conn->setPin1((PinView*) item);
-                        conn->setPos1(item->scenePos());
+                        PinView *pin1 = (PinView*)item;
+                        conn->setPin1(pin1);
+                        QPointF startP = pin1->scenePos();
+                        startP.setX(startP.x() + pin1->width/2);
+                        startP.setY(startP.y() + pin1->height/2);
+                        conn->setPos1(startP);
                         conn->setPos2(me->scenePos());
                         conn->updatePath();
 
@@ -148,7 +265,7 @@ bool SchemeEditorMainWindow::eventFilter(QObject *o, QEvent *e)
                 {
                     QGraphicsItem *item = itemAt(me->scenePos());
                     if (item && (item->type() == Connection::Type || item->type() == ComponentView::Type))
-                        delete item;
+                        deleteItem(item);
                     // if (selBlock == (QNEBlock*) item)
                         // selBlock = 0;
                     break;
@@ -177,7 +294,7 @@ bool SchemeEditorMainWindow::eventFilter(QObject *o, QEvent *e)
 
                     if (pin1->component() != pin2->component()  && !pin1->isConnected(pin2))
                     {
-                        conn->setPos2(pin2->scenePos());
+                        conn->setPos2(pin2->centerPos((PinView*)item));
                         conn->setPin2(pin2);
                         conn->updatePath();
                         conn = 0;
@@ -193,4 +310,8 @@ bool SchemeEditorMainWindow::eventFilter(QObject *o, QEvent *e)
         }
     }
     return QObject::eventFilter(o, e);
+}
+void SchemeEditorMainWindow::deleteItem(QGraphicsItem *item)
+{
+
 }

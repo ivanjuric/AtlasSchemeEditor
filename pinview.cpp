@@ -1,16 +1,20 @@
 #include "pinview.h"
 #include "connection.h"
+#include "componentview.h"
 #include <QStyle>
 #include <QStyleOptionGraphicsItem>
 #include <QPen>
 #include <QPainter>
 
-PinView::PinView(const QColor &lineColor, int x, int y, int dimension)
+PinView::PinView()
+{}
+PinView::PinView(const QColor &lineColor, int x, int y, int width, int height)
 {
     this->x = x;
     this->y = y;
     this->lineColor = lineColor;
-    this->dimension = dimension;
+    this->width = width;
+    this->height = height;
     setZValue((x + y) % 2);
 
     setFlags(ItemIsSelectable | ItemIsMovable );
@@ -18,7 +22,7 @@ PinView::PinView(const QColor &lineColor, int x, int y, int dimension)
 }
 QRectF PinView::boundingRect() const
 {
-    return QRectF(x, y, dimension, dimension);
+    return QRectF(x, y, width, height);
 }
 
 void PinView::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
@@ -51,7 +55,9 @@ void PinView::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, Q
 
 void PinView::setShape(QString shapeString)
 {
-    if(shapeString.toLower() == "in")
+    if(shapeString.toLower() == "buspin")
+        shape = PinTypeEnum::BusPin;
+    else if(shapeString.toLower() == "in")
         shape = PinTypeEnum::In;
     else if(shapeString.toLower() == "out")
         shape = PinTypeEnum::Out;
@@ -72,6 +78,9 @@ void PinView::setShape(QString shapeString)
 void PinView::drawPin(QPainter *painter, PinTypeEnum type)
 {
     switch(type){
+        case PinTypeEnum::BusPin:
+            drawBusPin(painter);
+            break;
         case PinTypeEnum::Square:
             drawSquare(painter);
             break;
@@ -103,13 +112,20 @@ void PinView::drawPin(QPainter *painter, PinTypeEnum type)
             break;
     }
 }
+void PinView::drawBusPin(QPainter *painter)
+{
+    QPen pen(Qt::yellow);
+    painter->setPen(pen);
+    painter->setBrush(Qt::transparent);
+    painter->drawRect(x,y,width, height);
+}
 void PinView::drawSquare(QPainter *painter)
 {
     QPen pen(lineColor);
     pen.setJoinStyle(Qt::MiterJoin);
     painter->setPen(pen);
     painter->setBrush(QBrush(fillColor,Qt::SolidPattern));
-    painter->drawRect(x,y,dimension,dimension);
+    painter->drawRect(x,y,width, height);
 }
 void PinView::drawCircle(QPainter *painter)
 {
@@ -117,20 +133,20 @@ void PinView::drawCircle(QPainter *painter)
     pen.setJoinStyle(Qt::MiterJoin);
     painter->setPen(pen);
     painter->setBrush(QBrush(fillColor,Qt::SolidPattern));
-    painter->drawEllipse(x,y,dimension,dimension);
+    painter->drawEllipse(x,y,width, height);
 }
 void PinView::drawInOut(QPainter *painter)
 {
-    drawTriangle(painter,QPoint(x, y),QPoint(x + (int)dimension/2, y + (int)dimension/2),QPoint(x,y+dimension));
-    drawTriangle(painter,QPoint(x+dimension, y),QPoint(x + (int)dimension/2, y + (int)dimension/2),QPoint(x+dimension,y+dimension));
+    drawTriangle(painter,QPoint(x, y),QPoint(x + (int)width/2, y + (int)height/2),QPoint(x,y+height));
+    drawTriangle(painter,QPoint(x+width, y),QPoint(x + (int)height/2, y + (int)height/2),QPoint(x+width,y+height));
 }
 void PinView::drawRL(QPainter *painter)
 {
-    drawTriangle(painter,QPoint(x+dimension, y), QPoint(x, y + (int)dimension/2), QPoint(x+dimension,y+dimension));
+    drawTriangle(painter,QPoint(x+width, y), QPoint(x, y + (int)height/2), QPoint(x+width,y+height));
 }
 void PinView::drawLR(QPainter *painter)
 {
-    drawTriangle(painter,QPoint(x, y),QPoint(x + dimension, y + (int)dimension/2),QPoint(x,y+dimension));
+    drawTriangle(painter,QPoint(x, y),QPoint(x + width, y + (int)height/2),QPoint(x,y+height));
 }
 void PinView::drawTriangle(QPainter *painter, QPoint a, QPoint b, QPoint c)
 {
@@ -167,5 +183,48 @@ bool PinView::isConnected(PinView *other)
 void PinView::setComponent(ComponentView *c)
 {
     m_component = c;
+}
+
+void PinView::setSide(QString side)
+{
+    if(side == "left")
+        this->side = PinSideEnum::Left;
+    else
+        this->side = PinSideEnum::Right;
+}
+QPointF* PinView::getStartPosition()
+{
+    QPointF *point = new QPointF();
+    if(side == PinSideEnum::Left)
+    {
+        point->setX(component()->x - x - width);
+        point->setY(component()->y + y);
+    }
+    else if(side == PinSideEnum::Right)
+    {
+        point->setX(component()->x + component()->width + x);
+        point->setY(component()->y + y);
+    }
+    else
+    {
+        point->setX(this->parentItem()->pos().x() + x);
+        point->setY(this->parentItem()->pos().y() + y);
+    }
+
+    return point;
+}
+void PinView::setStartPosition()
+{
+    QPointF *point = getStartPosition();
+    x = point->x();
+    y = point->y();
+}
+
+QPointF PinView::centerPos(PinView *pin)
+{
+    QPointF point = pin->parentItem()->scenePos();
+    point.setX(point.x() + x + pin->width/2);
+    point.setY(point.y() + y + pin->height/2);
+    return point;
 }
 
