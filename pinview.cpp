@@ -7,7 +7,10 @@
 #include <QPainter>
 
 PinView::PinView()
-{}
+{
+    setFlags(ItemIsMovable );
+    setFlag(QGraphicsItem::ItemSendsScenePositionChanges);
+}
 PinView::PinView(const QColor &lineColor, int x, int y, int width, int height)
 {
     this->x = x;
@@ -15,6 +18,8 @@ PinView::PinView(const QColor &lineColor, int x, int y, int width, int height)
     this->lineColor = lineColor;
     this->width = width;
     this->height = height;
+    label = new QGraphicsTextItem(this);
+    margin = 2;
     setZValue((x + y) % 2);
 
     setFlags(ItemIsSelectable | ItemIsMovable );
@@ -226,5 +231,28 @@ QPointF PinView::centerPos(PinView *pin)
     point.setX(point.x() + x + pin->width/2);
     point.setY(point.y() + y + pin->height/2);
     return point;
+}
+
+void PinView::setLabel()
+{
+    label->setPlainText(this->id.toUpper());
+    label->setFont(QFont("Arial", 5));
+
+    QRectF r = label->boundingRect();
+
+    QPointF *point = this->getStartPosition();
+
+    if (side == PinSideEnum::Left)
+    {
+        point->setX(point->x() + width);
+        point->setY(point->y() + height/2 - r.height()/2);
+        label->setPos(*point);
+    }
+    else if(side == PinSideEnum::Right)
+    {
+        point->setX(point->x() - r.right());
+        point->setY(point->y() + height/2 - r.height()/2);
+        label->setPos(*point);
+    }
 }
 

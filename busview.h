@@ -22,6 +22,7 @@ public:
     QVector<PinView*> busPins;
 
     RegularBus *model;
+    enum { Type = QGraphicsItem::UserType + 5 };
 
     QRectF boundingRect() const;
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *item, QWidget *widget);

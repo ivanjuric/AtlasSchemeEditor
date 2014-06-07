@@ -238,8 +238,13 @@ bool SchemeEditorMainWindow::eventFilter(QObject *o, QEvent *e)
                 case Qt::LeftButton:
                 {
                     QGraphicsItem *item = itemAt(me->scenePos());
+
                     if (item && item->type() == PinView::Type)
                     {
+                        QGraphicsItem *parent = item->parentItem();
+                        if(parent && parent->type() == BusView::Type)
+                            break;
+
                         conn = new Connection(0);
                         scene->addItem(conn);
                         PinView *pin1 = (PinView*)item;

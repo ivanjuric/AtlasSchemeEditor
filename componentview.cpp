@@ -29,6 +29,7 @@ ComponentView::ComponentView(int x, int y, ComponentModel *model)
     foreach(PinView* pin, model->visualPins)
     {
         pin->setComponent(this);
+        pin->setLabel();
     }
 }
 

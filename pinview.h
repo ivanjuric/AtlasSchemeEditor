@@ -56,11 +56,15 @@ public:
     void setStartPosition();
     QPointF centerPos(PinView *pin);
 
+    QGraphicsTextItem *label;
+    void setLabel();
+
 protected:
     QVariant itemChange(GraphicsItemChange change, const QVariant &value);
 
 private:
     ComponentView *m_component;
+    int margin;
 };
 
 #endif // PINVIEW_H
