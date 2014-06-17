@@ -6,6 +6,9 @@ VisualComponentElement::VisualComponentElement(int x, int y, QColor color)
     this->y = y;
     this->mainColor = color;
 }
-QPoint VisualComponentElement::getPosition(){
-    return QPoint(x,y);
+VisualComponentElement::VisualComponentElement(VisualComponentElement *element)
+{
+    this->x = element->x;
+    this->y = element->y;
+    this->mainColor = element->mainColor;
 }

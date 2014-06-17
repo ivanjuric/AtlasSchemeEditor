@@ -7,6 +7,8 @@ class VisualRectangle : public VisualComponentElement
 {
 public:
     VisualRectangle(int x, int y, QColor color);
+    VisualRectangle(VisualRectangle *rect);
+    ~VisualRectangle(){}
     int width;
     int height;
     int lineThickness;

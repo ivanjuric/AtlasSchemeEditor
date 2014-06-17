@@ -5,6 +5,7 @@
 #include "editorgraphicsview.h"
 #include "libraryfile.h"
 #include "connection.h"
+#include "componentmodel.h"
 
 #include <QGraphicsView>
 #include <QMainWindow>
@@ -30,14 +31,20 @@ public:
 
     void save(QDataStream &ds);
     void load(QDataStream &ds);
+    int getNumberOfSameComponentsInScene(QString baseName);
+    ComponentView *getComponentFromScene(QString instanceName);
+    int findComponentNameIndex(QString baseName);
 
 
 public slots:
     void selectLibrary();
     void saveSceneToFile();
     void loadSceneFromFile();
-    void AddComponentToScene(int id);
+    void AddComponentToScene(QString id);
     void AddBusToScene(int id);
+    void mirror(QString instanceName);
+    void clearScene();
+
 
 signals:
     void clicked(int id);
@@ -48,6 +55,8 @@ private:
     bool isBusInScene(int uid);
     QGraphicsItem *itemAt(const QPointF&);
 
+    QSignalMapper *componentsSignalMapper;
+    QSignalMapper *contextMenuSignalMapper;
     QSignalMapper *signalMapper;
 
     LibraryFile *library;
@@ -56,7 +65,19 @@ private:
     QGraphicsScene *scene;
 
     Connection *conn;
+
+    //QAction *actionMirror;
     void deleteItem(QGraphicsItem *item);
+    void fillToolbar();
+    void clearSceneView();
+    void clearConnections();
+    void updateConnections();
+
+    QGraphicsItem *activeItem;
+
+
+protected:
+    void contextMenuEvent(QContextMenuEvent *event);
 };
 
 #endif // SCHEMEEDITORMAINWINDOW_H

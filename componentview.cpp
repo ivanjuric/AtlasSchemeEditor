@@ -1,6 +1,7 @@
 #include "componentview.h"
 #include "visualrectangle.h"
 #include "visualtext.h"
+#include "Enums.h"
 
 #include <QGraphicsView>
 #include <QStyle>
@@ -8,28 +9,40 @@
 #include <QPen>
 #include <QPainter>
 #include <QPoint>
+#include <QMenu>
+#include <QContextMenuEvent>
 
-ComponentView::ComponentView()
+ComponentView::ComponentView(ComponentModel *model, QPoint pos)
 {
-}
-
-ComponentView::ComponentView(int x, int y, ComponentModel *model)
-{
-    this->x = x;
-    this->y = y;
-    this->model = model;
-    setZValue((x + y) % 2);
-
-    setFlags(ItemIsSelectable | ItemIsMovable);
-
-    //set initial width and height
-    width = 100;
-    height = 100;
-
-    foreach(PinView* pin, model->visualPins)
+    // Set properties from model
+    setId(model->id());
+    setTitle(model->title());
+    setInstanceNameBase(model->instanceNameBase());
+    setIconFile(model->iconFile());
+    setTooltip(model->tooltip());
+    setMinInstances(model->minInstances());
+    setMaxInstances(model->maxInstances());
+    setComdelFile(model->comdelFile());
+    foreach (VisualComponentElement *e, model->visualElements())
     {
-        pin->setComponent(this);
-        pin->setLabel();
+        m_visualElements.append(e);
+    }
+    foreach (PinModel *p, model->pins())
+    {
+        PinView *pin = new PinView(p);
+        m_pins.append(pin);
+    }
+
+    setDimensions();
+
+    setZValue((x() + y()) % 2);
+    setFlags(ItemIsSelectable | ItemIsMovable);
+}
+void ComponentView::setParentToPins()
+{
+    foreach (PinView *pin, this->pins())
+    {
+        pin->setParentComponent(this);
     }
 }
 
@@ -39,50 +52,60 @@ void ComponentView::setDimensions()
     minL = minU = std::numeric_limits<int>::max();
     maxR = maxD = std::numeric_limits<int>::min();
 
-    foreach (VisualComponentElement *element, this->model->visualElements) {
+    foreach (VisualComponentElement *element, visualElements()) {
         VisualRectangle *rect = dynamic_cast<VisualRectangle*>(element);
         VisualText *text = dynamic_cast<VisualText*>(element);
         VisualCircle *circle = dynamic_cast<VisualCircle*>(element);
 
-        if(rect){
+        if(rect)
+        {
             if(rect->x < minL)
                 minL = rect->x;
             if(rect->y < minU)
                 minU = rect->y;
             if((rect->x + rect->width) > maxR)
                 maxR = rect->x + rect->width;
-            if((rect->y + rect->width) > maxD)
-                maxD = rect->y + rect->width;
+            if((rect->y + rect->height) > maxD)
+                maxD = rect->y + rect->height;
         }
-        else if(text){
+        else if(text)
+        {
             if(text->x < minL)
                 minL = text->x;
             if(text->y < minU)
                 minU = text->y;
         }
-        else if(circle){
-
+        else if(circle)
+        {
+            if(circle->x < minL)
+                minL = circle->x;
+            if(circle->y < minU)
+                minU = circle->y;
+            if(circle->x + circle->radius > maxR)
+                maxR = circle->x + circle->radius;
+            if(circle->y + circle->radius > maxD)
+                maxD = circle->y + circle->radius;
         }
     }
 
-    x = minL;
-    y = maxD;
-    width = maxR - minL;
-    height = maxD - minU;
+    setX(minL);
+    setY(minU);
+    setWidth(maxR - minL);
+    setHeight(maxD - minU);
 }
 
 QRectF ComponentView::boundingRect() const
 {
-    return QRectF(x, y, width, height);
+    return QRectF(m_x, m_y, m_width, m_height);
 }
 
 void ComponentView::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
 {
     Q_UNUSED(widget);
 
-    QColor fillColor = (option->state & QStyle::State_Selected) ? color.dark(150) : color;
-    if (option->state & QStyle::State_MouseOver)
-         fillColor = fillColor.light(125);
+//    QColor fillColor = (option->state & QStyle::State_Selected) ? color.dark(150) : color;
+//    if (option->state & QStyle::State_MouseOver)
+//         fillColor = fillColor.light(125);
 
 
 
@@ -95,21 +118,7 @@ void ComponentView::paint(QPainter *painter, const QStyleOptionGraphicsItem *opt
     pen.setWidth(width);
     QBrush b = painter->brush();
 
-//    painter->setBrush(QBrush(fillColor.dark(option->state & QStyle::State_Sunken ? 120 : 100)));
-//    painter->setPen(QPen(QColor(Qt::yellow)));
-//    painter->drawRect(QRect(0, 0, 100, 100));
-
-//    painter->setPen(QPen(QColor(Qt::black)));
-//    painter->setBrush(QBrush(QColor(Qt::red),Qt::SolidPattern));
-//    painter->drawRect(QRect(10, 10, 70, 70));
-
-//    painter->setPen(QPen(QColor(Qt::white)));
-//    painter->setBrush(QBrush(QColor(Qt::red),Qt::SolidPattern));
-//    painter->drawText(QRect(10, 10, 70, 70), Qt::AlignCenter, "Qt");
-
-
-
-    foreach(VisualComponentElement *element, model->visualElements)
+    foreach(VisualComponentElement *element, m_visualElements)
     {
         drawVisualElement(painter,element);
     }
@@ -127,8 +136,6 @@ void ComponentView::drawVisualElement(QPainter *painter, VisualComponentElement 
         drawVisualCircle(painter,circle);
     else if(text)
         drawVisualText(painter,text);
-
-
 }
 
 void ComponentView::drawVisualRectangle(QPainter *painter, VisualRectangle *rect)
@@ -173,10 +180,10 @@ void ComponentView::save(QDataStream &ds)
         if (pin_->type() != PinView::Type)
             continue;
 
-        PinView *pin = (PinView*) pin_;
-        ds << (quint64) pin;
-        ds << pin->id;
-        ds << (int)pin->side;
+        //PinView *pin = (PinView*) pin_;
+//        ds << (quint64) pin;
+//        ds << pin->id;
+//        ds << (int)pin->side;
     }
 }
 
@@ -192,14 +199,29 @@ void ComponentView::load(QDataStream &ds, QMap<quint64, PinView*> &pinMap)
         quint64 ptr;
 
         ds >> (quint64) ptr;
-        PinView *p = (PinView*)ptr;
-        PinView *pin = new PinView();
+        //PinView *p = (PinView*)ptr;
+        //PinView *pin = new PinView();
 
-        ds >> pin->id;
-        int pinSide;
-        ds >> pinSide;
-        pin->side = (PinView::PinSideEnum)pinSide;
+//        ds >> pin->id;
+//        int pinSide;
+//        ds >> pinSide;
+//        pin->side = (PinSideEnum)pin->side;
 
-        pinMap[ptr] = pin;
+//        pinMap[ptr] = pin;
     }
+}
+
+void ComponentView::mirrorSides()
+{
+    setMirrored(!mirrored());
+    foreach (PinView *pin, pins())
+    {
+        pin->switchSides();
+    }
+    this->update();
+}
+
+void ComponentView::setUniqueInstanceName(int num)
+{
+    m_instanceName = QString(instanceNameBase() + "_" + QString::number(num).rightJustified(3,'0'));
 }

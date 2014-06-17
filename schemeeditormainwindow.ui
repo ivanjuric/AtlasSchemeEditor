@@ -93,6 +93,14 @@
     <string>Save</string>
    </property>
   </action>
+  <action name="actionClearScene">
+   <property name="text">
+    <string>Clear scene</string>
+   </property>
+   <property name="toolTip">
+    <string>Clear scene</string>
+   </property>
+  </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <customwidgets>

@@ -8,10 +8,11 @@ class VisualComponentElement
 {
 public:
     VisualComponentElement(int x, int y, QColor color);
+    VisualComponentElement(VisualComponentElement *element);
+    virtual ~VisualComponentElement(){}
     int x;
     int y;
     QColor mainColor;
-    virtual QPoint getPosition();
 };
 
 #endif // VISUALCOMPONENTELEMENT_H

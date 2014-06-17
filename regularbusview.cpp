@@ -1,4 +1,4 @@
-#include "busview.h"
+#include "regularbusview.h"
 #include "regularbus.h"
 
 #include <QGraphicsView>
@@ -8,7 +8,7 @@
 #include <QPainter>
 #include <QPoint>
 
-BusView::BusView(int x, int y, RegularBus *model)
+RegularBusView::RegularBusView(int x, int y, RegularBus *model)
 {
     this->x = x;
     this->y = y;
@@ -25,7 +25,7 @@ BusView::BusView(int x, int y, RegularBus *model)
     setFlags(ItemIsSelectable | ItemIsMovable);
 }
 
-void BusView::fillBusPins()
+void RegularBusView::fillBusPins()
 {
     double ratio = lineLength/lineThickness;
     int numberOfPins = (int)ratio;
@@ -35,8 +35,10 @@ void BusView::fillBusPins()
     {
         for(int i = 0; i < numberOfPins;i++)
         {
-            PinView *pin = new PinView(Qt::white, lineThickness * i, 0, lineThickness, lineThickness);
-            pin->setShape("buspin");
+            //PinView *pin = new PinView(Qt::white, lineThickness * i, 0, lineThickness, lineThickness);
+            PinModel *model = new PinModel(i);
+            PinView *pin = new PinView(model);
+            pin->setShape(PinTypeEnum::BusPin);
             pin->setParentItem(this);
             busPins.append(pin);
         }
@@ -47,14 +49,14 @@ void BusView::fillBusPins()
     }
 }
 
-QRectF BusView::boundingRect() const
+QRectF RegularBusView::boundingRect() const
 {
     if(orientation == OrientationEnum:: Horizontal)
         return QRectF(x, y, lineLength, lineThickness);
     else
         return QRectF(x, y, lineThickness, lineLength);
 }
-void BusView::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
+void RegularBusView::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
 {
 
     Q_UNUSED(widget);

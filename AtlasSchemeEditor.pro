@@ -16,7 +16,6 @@ SOURCES += main.cpp\
         schemeeditormainwindow.cpp \
     libraryfile.cpp \
     editorgraphicsview.cpp \
-    componentmodel.cpp \
     componentview.cpp \
     visualcomponentelement.cpp \
     visualrectangle.cpp \
@@ -30,12 +29,13 @@ SOURCES += main.cpp\
     busline.cpp \
     regularbus.cpp \
     automaticbus.cpp \
-    busview.cpp
+    pinmodel.cpp \
+    componentmodel.cpp \
+    regularbusview.cpp
 
 HEADERS  += schemeeditormainwindow.h \
     libraryfile.h \
     editorgraphicsview.h \
-    componentmodel.h \
     componentview.h \
     visualcomponentelement.h \
     visualrectangle.h \
@@ -49,8 +49,10 @@ HEADERS  += schemeeditormainwindow.h \
     busline.h \
     regularbus.h \
     automaticbus.h \
-    busview.h \
-    Enums.h
+    Enums.h \
+    pinmodel.h \
+    componentmodel.h \
+    regularbusview.h
 
 FORMS    += schemeeditormainwindow.ui
 

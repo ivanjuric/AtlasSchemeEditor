@@ -3,15 +3,13 @@
 #include "pinview.h"
 #include <QGraphicsItem>
 
-#ifndef BUSVIEW_H
-#define BUSVIEW_H
+#ifndef REGULARBUSVIEW_H
+#define REGULARBUSVIEW_H
 
-class RegularBus;
-
-class BusView : public QGraphicsItem
+class RegularBusView : public QGraphicsItem
 {
 public:
-    BusView(int x, int y, RegularBus *model);
+    RegularBusView(int x, int y, RegularBus *model);
 
     OrientationEnum orientation;
     int lineLength;
@@ -22,6 +20,7 @@ public:
     QVector<PinView*> busPins;
 
     RegularBus *model;
+
     enum { Type = QGraphicsItem::UserType + 5 };
 
     QRectF boundingRect() const;
@@ -35,4 +34,4 @@ public:
 private:
     void fillBusPins();
 };
-#endif // BUSVIEW_H
+#endif // REGULARBUSVIEW_H

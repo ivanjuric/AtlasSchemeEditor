@@ -19,5 +19,11 @@ enum class PinTypeEnum
     SquareOut = 7,
     SquareInOut = 8
 };
+enum class PinSideEnum
+{
+    None = 0,
+    Left = 1,
+    Right = 2
+};
 
 #endif // ENUMS_H

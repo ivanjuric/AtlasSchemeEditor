@@ -1,18 +1,16 @@
-#include <QGraphicsItem>
+#include <QColor>
+#include <QString>
 #include "Enums.h"
-#include "pinmodel.h"
 
-#ifndef PINVIEW_H
-#define PINVIEW_H
-
-class Connection;
-class ComponentView;
+#ifndef PINMODEL_H
+#define PINMODEL_H
 
 
-class PinView : public QGraphicsItem
+class PinModel
 {
 public:
-    PinView(PinModel *model);
+    // Constructor
+    PinModel(int uid);
 
     // Getters
     int uid() { return m_uid; }
@@ -30,8 +28,6 @@ public:
     QColor lineColorConnected() { return m_lineColorConnected; }
     QColor fillColorConnected() { return m_fillColorConnected; }
 
-    ComponentView *parentComponent() { return m_parentComponent; }
-
     // Setters
     void setUid(int uid) { m_uid = uid; }
     void setId(QString id) { m_id = id; }
@@ -48,11 +44,8 @@ public:
     void setLineColorConnected(QColor lineColorConnected) { m_lineColorConnected = lineColorConnected; }
     void setFillColorConnected(QColor fillColorConnected) { m_fillColorConnected = fillColorConnected; }
 
-    void setParentComponent(ComponentView *parentComponent);
-    void setParentInstanceName(QString name) {m_parentInstanceName = name;}
 
 private:
-    // Properties from model
     int m_uid;
     QString m_id;
     QString m_title;
@@ -68,54 +61,6 @@ private:
     QColor m_lineColorConnected;
     QColor m_fillColorConnected;
     QString m_checkConnection;
-
-    ComponentView *m_parentComponent;
-    QString m_parentInstanceName;
-
-
-
-public:
-
-    QRectF boundingRect() const;
-    void paint(QPainter *painter, const QStyleOptionGraphicsItem *item, QWidget *widget);
-
-    void drawPin(QPainter *painter, PinTypeEnum type);
-    void drawBusPin(QPainter *painter);
-    void drawSquare(QPainter *painter);
-    void drawCircle(QPainter *painter);
-    void drawInOut(QPainter *painter);
-    void drawRL(QPainter *painter);
-    void drawLR(QPainter *painter);
-    void drawTriangle(QPainter *painter, QPoint a, QPoint b, QPoint c);
-
-    QVector<Connection*> connections;
-
-    enum { Type = QGraphicsItem::UserType + 1 };
-    enum { NamePort = 1, TypePort = 2 };
-    int type() const { return Type; }
-    bool isConnected(PinView*);
-    void setComponent(ComponentView *c);
-    void setSide(QString side);
-
-    QPointF *getStartPosition();
-    void setStartPosition();
-    QPointF centerPos(PinView *pin);
-
-    QGraphicsTextItem *label;
-    void setLabel();
-
-    void setValuesFromLibrary(PinModel *model);
-    void switchSides();
-
-
-protected:
-    QVariant itemChange(GraphicsItemChange change, const QVariant &value);
-
-private:
-    void copyPin(PinView *pin);
-    int margin;
-    void updatePositionAfterMirror();
-
 };
 
-#endif // PINVIEW_H
+#endif // PINMODEL_H
