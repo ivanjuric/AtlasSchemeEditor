@@ -7,7 +7,8 @@
 #include "componentmodel.h"
 #include <QJsonDocument>
 #include <QJsonObject>
-#include <QString>
+#include "attribute.h"
+#include "qstring.h"
 #include <QFile>
 #include <qjsonarray.h>
 
@@ -55,6 +56,10 @@ bool LibraryFile::loadJson(QString filepath)
     // Load automatic and regular buses
     loadBuses(root["regularBusList"].toArray(), true);
     loadBuses(root["automaticBusList"].toArray());
+
+    // Load connection rules
+    loadRegularBusConnectionRules(root["regularBusConnectionRules"].toArray());
+    loadAutomaticBusConnectionRules(root["automaticBusConnectionRules"].toArray());
 
     return true;
 }
@@ -114,6 +119,9 @@ void LibraryFile::loadComponents(QJsonArray compArray)
 
         // Load visual pin list
         loadComponentPins(obj["visualPinList"].toArray(), c);
+
+        // Load component attributes
+        loadAttributes(obj["attributes"].toArray(), c);
 
         componentList.append(c);
     }
@@ -182,6 +190,38 @@ void LibraryFile::loadComponentPins(QJsonArray pins, ComponentModel *component)
         component->addPin(pin);
     }
 }
+void LibraryFile::loadAttributes(QJsonArray attributes, ComponentModel *component)
+{
+    foreach (QJsonValue attrVal, attributes)
+    {
+       QJsonObject attrObject = attrVal.toObject();
+
+       Attribute *attr = new Attribute();
+       attr->setId(attrObject["ID"].toString());
+       attr->setTitle(attrObject["title"].toString());
+       attr->setPopupText(attrObject["popupText"].toString());
+       attr->setPopupType(getPopupTypeFromString(attrObject["popup"].toString()));
+       attr->setDefaultValue(attrObject["default"].toInt());
+
+       QJsonArray enums = attrObject["enumerated"].toArray();
+       if(enums.count() > 0)
+           loadAttributeEnumeratedValues(enums, attr);
+
+       component->addAttribute(attr);
+
+    }
+}
+void LibraryFile::loadAttributeEnumeratedValues(QJsonArray enumeratedValues, Attribute *attribute)
+{
+    foreach (QJsonValue enumVal, enumeratedValues)
+    {
+       QJsonObject enumValObject = enumVal.toObject();
+       QString name = enumValObject["text"].toString();
+       int value = enumValObject["value"].toInt();
+
+       attribute->addEnumeratedValue(name, value);
+    }
+}
 
 // Method for loading both automatic (regularBusType=false) and regular (regularBusType=true) buses.
 void LibraryFile::loadBuses(QJsonArray busList, bool regularBusType)
@@ -203,19 +243,19 @@ void LibraryFile::loadBuses(QJsonArray busList, bool regularBusType)
             bus = new AutomaticBus();
 
         // Fill common properties for both bus types
-        bus->uid = randId++;
-        bus->ID = busObject["ID"].toString();
+        //bus->setUid("uid");// set unique id
+        bus->setId(busObject["ID"].toString());
         loadBusLines(busObject["busLines"].toArray(), bus);
 
         // Fill regular bus properties, else fill automatic bus list
         if(regularBusType)
         {
             //RegularBus *regBus = ((RegularBus*)bus);
-            ((RegularBus*)bus)->title = busObject["title"].toString();
-            ((RegularBus*)bus)->tooltip = busObject["tooltip"].toString();
-            ((RegularBus*)bus)->iconFile = busObject["iconFile"].toString();
-            ((RegularBus*)bus)->minInstances = busObject["minInstances"].toInt();
-            ((RegularBus*)bus)->maxInstances = busObject["maxInstances"].toInt();
+            ((RegularBus*)bus)->setTitle(busObject["title"].toString());
+            ((RegularBus*)bus)->setTooltip(busObject["tooltip"].toString());
+            ((RegularBus*)bus)->setIconFile(busObject["iconFile"].toString());
+            ((RegularBus*)bus)->setMinInstances(busObject["minInstances"].toInt());
+            ((RegularBus*)bus)->setMaxInstances(busObject["maxInstances"].toInt());
 
             loadBusView(busObject["view"].toObject(), (RegularBus*)bus);
             regularBuses.append(((RegularBus*)bus));
@@ -240,17 +280,115 @@ void LibraryFile::loadBusLines(QJsonArray busLines, Bus *bus)
         line->setTerminateWith(lineObject["terminate_with"].toInt());
         line->setIfUnterminated(lineObject["if_unterminated"].toInt());
 
-        bus->busLines.append(line);
+        bus->addBusLine(line);
     }
 }
 void LibraryFile::loadBusView(QJsonObject view, RegularBus *bus)
 {
-    bus->setOrientation(view["lineOrientation"].toString());
+    bus->setOrientation(getOrientationFromString(view["lineOrientation"].toString()));
     bus->setLineColor(getColor(view["lineColor"].toString()));
     bus->setLineThickness(view["lineThickness"].toInt());
     bus->setLineLength(view["lineLength"].toInt());
 }
 
+// Load regular bus connection rules
+void LibraryFile::loadRegularBusConnectionRules(QJsonArray rulesArray)
+{
+    foreach(QJsonValue ruleVal, rulesArray)
+    {
+        QJsonObject ruleObject = ruleVal.toObject();
+
+        RegularBusConnectionRule *rule = new RegularBusConnectionRule();
+        rule->setComponentId(ruleObject["component"].toString());
+        rule->setComponentVisualPinId(ruleObject["componentVisualPin"].toString());
+        rule->setBusId(ruleObject["bus"].toString());
+        foreach(QJsonValue pin, ruleObject["pinInstantiationList"].toArray())
+        {
+            rule->addPinIdToInstantiationList(pin.toString());
+        }
+        foreach(QJsonValue term, ruleObject["connectionTerminates"].toArray())
+        {
+            rule->addToConnectionTerminates(term.toString());
+        }
+        loadRulePopup(ruleObject["popup"].toArray(), rule);
+
+        regularBusConnectionRules.append(rule);
+    }
+}
+void LibraryFile::loadRulePopup(QJsonArray popupArray, RegularBusConnectionRule *rule)
+{
+    foreach(QJsonValue popupVal, popupArray)
+    {
+        QJsonObject popupObject = popupVal.toObject();
+
+        RulePopup *popup = new RulePopup();
+        popup->setId(popupObject["ID"].toString());
+        popup->setContextMenuItem(popupObject["contextMenuItem"].toString());
+        popup->setOpen(getPopupTypeFromString(popupObject["open"].toString()));
+        popup->setMessage(popupObject["message"].toString());
+        popup->setPinHeaderText(popupObject["pinHeaderText"].toString());
+        popup->setBusLineHeaderText(popupObject["busLineHeaderText"].toString());
+        loadRulePopupPinList(popupObject["pinList"].toArray(), popup);
+
+        rule->addPopup(popup);
+    }
+}
+void LibraryFile::loadRulePopupPinList(QJsonArray pinArray, RulePopup *popup)
+{
+    foreach(QJsonValue pinVal, pinArray)
+    {
+        QJsonObject pinObject = pinVal.toObject();
+
+        PinRulePopup *pin = new PinRulePopup();
+        pin->setId(pinObject["ID"].toString());
+        pin->setTitle(pinObject["title"].toString());
+        pin->setDefaultPin(pinObject["default"].toString());
+        foreach (QJsonValue busLineName, pinObject["busLineList"].toArray())
+        {
+            pin->addBusLineToList(busLineName.toString());
+        }
+
+        popup->addPinRulePopupToPinList(pin);
+    }
+}
+
+// Load automatic bus connection rules
+void LibraryFile::loadAutomaticBusConnectionRules(QJsonArray rulesArray)
+{
+    foreach(QJsonValue ruleVal, rulesArray)
+    {
+        QJsonObject ruleObject = ruleVal.toObject();
+
+        AutomaticBusConnectionRule *rule = new AutomaticBusConnectionRule();
+        rule->setBusId(ruleObject["automaticBus"].toString());
+        AutomaticBusConnectionRuleComponent *first = loadAutomaticBusConnectionRuleComponent(ruleObject["firstComponent"].toObject());
+        AutomaticBusConnectionRuleComponent *second = loadAutomaticBusConnectionRuleComponent(ruleObject["secondComponent"].toObject());
+
+        rule->setFirstComponent(first);
+        rule->setSecondComponent(second);
+
+        automaticBusConnectionRules.append(rule);
+    }
+}
+AutomaticBusConnectionRuleComponent* LibraryFile::loadAutomaticBusConnectionRuleComponent(QJsonObject compObj)
+{
+    AutomaticBusConnectionRuleComponent *comp = new AutomaticBusConnectionRuleComponent();
+    comp->setComponentId(compObj["component"].toString());
+    comp->setComponentVisualPinId(compObj["componentVisualPin"].toString());
+    foreach(QJsonValue pin, compObj["pinInstantiationList"].toArray())
+    {
+        comp->addPinIdToInstantiationList(pin.toString());
+    }
+    return comp;
+}
+
+OrientationEnum LibraryFile::getOrientationFromString(QString orientation)
+{
+    if(orientation == "vertical")
+        return OrientationEnum::Vertical;
+    else
+        return OrientationEnum::Horizontal;
+}
 PinTypeEnum LibraryFile::getShapeFromString(QString shapeString)
 {
     PinTypeEnum shape;
@@ -300,13 +438,30 @@ ComponentModel *LibraryFile::getComponentById(QString id)
     }
     return 0;
 }
+PopupTypeEnum LibraryFile::getPopupTypeFromString(QString popupType)
+{
+    PopupTypeEnum type = (PopupTypeEnum)0;
+    if(popupType.toLower() == "automatic")
+        type = PopupTypeEnum::Automatic;
+    else if(popupType.toLower() == "on_demand")
+        type = PopupTypeEnum::OnDemand;
 
-// -------------------  STARI KOD -----------------
-Bus *LibraryFile::GetBusByUniqueId(int uid)
+    return type;
+}
+AutomaticBus* LibraryFile::getAutomaticBusById(QString id)
+{
+    foreach (AutomaticBus *bus, automaticBuses)
+    {
+        if(bus->id() == id)
+            return bus;
+    }
+    return 0;
+}
+Bus *LibraryFile::GetBusByUniqueId(QString id)
 {
     foreach(RegularBus* bus, this->regularBuses)
     {
-       if(bus->uid == uid)
+       if(bus->id() == id)
            return bus;
     }
     return 0;

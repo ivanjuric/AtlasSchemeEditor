@@ -5,6 +5,8 @@
 #ifndef EDITORGRAPHICSVIEW_H
 #define EDITORGRAPHICSVIEW_H
 
+#pragma once
+
 class EditorGraphicsView : public QGraphicsView
 {
     Q_OBJECT

@@ -64,6 +64,15 @@
    <property name="allowedAreas">
     <set>Qt::LeftToolBarArea|Qt::RightToolBarArea</set>
    </property>
+   <property name="iconSize">
+    <size>
+     <width>32</width>
+     <height>32</height>
+    </size>
+   </property>
+   <property name="toolButtonStyle">
+    <enum>Qt::ToolButtonFollowStyle</enum>
+   </property>
    <property name="floatable">
     <bool>false</bool>
    </property>

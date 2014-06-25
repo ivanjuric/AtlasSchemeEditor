@@ -1,7 +1,9 @@
-#include <QString>
+#include <QtGui>
 
 #ifndef ADDRESSSPACE_H
 #define ADDRESSSPACE_H
+
+#pragma once
 
 class AddressSpace
 {

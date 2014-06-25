@@ -1,8 +1,11 @@
-#include <QColor>
+#include "qcolor.h"
 #include <QPoint>
 
 #ifndef VISUALCOMPONENTELEMENT_H
 #define VISUALCOMPONENTELEMENT_H
+
+#pragma once
+
 
 class VisualComponentElement
 {

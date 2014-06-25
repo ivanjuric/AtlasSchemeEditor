@@ -3,6 +3,9 @@
 #ifndef VISUALRECTANGLE_H
 #define VISUALRECTANGLE_H
 
+#pragma once
+
+
 class VisualRectangle : public VisualComponentElement
 {
 public:

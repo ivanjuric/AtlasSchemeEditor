@@ -5,11 +5,12 @@
 #include "pinview.h"
 
 #include <QAction>
-#include <QGraphicsItem>
+#include "qgraphicsitem.h"
 
 #ifndef COMPONENTVIEW_H
 #define COMPONENTVIEW_H
 
+#pragma once
 
 class ComponentView : public QGraphicsItem
 {
@@ -27,8 +28,12 @@ public:
     QString comdelFile() { return m_comdelFile; }
     QVector<VisualComponentElement*> visualElements() { return m_visualElements; }
     QVector<PinView*> pins() { return m_pins; }
+    QVector<Attribute*> attributes() { return m_attributes; }
+
+
 
     QString instanceName() { return m_instanceName; }
+    void setInstanceName(QString instanceName) { m_instanceName = instanceName; }
     int x() { return m_x; }
     int y() { return m_y; }
     int width() { return m_width; }
@@ -56,6 +61,7 @@ private:
     QString m_comdelFile;
     QVector<VisualComponentElement*> m_visualElements;
     QVector<PinView*> m_pins;
+    QVector<Attribute*> m_attributes;
 
     // Setters
     void setId(QString id) { m_id = id; }

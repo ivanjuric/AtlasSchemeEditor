@@ -1,7 +1,10 @@
-#include <QString>
+#include "qstring.h"
 
 #ifndef BUSLINE_H
 #define BUSLINE_H
+
+#pragma once
+
 
 class BusLine
 {

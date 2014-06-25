@@ -117,3 +117,4 @@ ComponentView* EditorGraphicsView::getComponentFromScene(QString name)
 //    return 0;
 //}
 
+

@@ -1,7 +1,7 @@
 #include "connection.h"
 #include "pinview.h"
 
-#include <QGraphicsItem>
+#include "qgraphicsitem.h"
 #include <QBrush>
 #include <QPen>
 #include <QGraphicsScene>
@@ -13,6 +13,7 @@ Connection::Connection(QGraphicsItem *parent) : QGraphicsPathItem(parent)
     setZValue(-1);
     m_pin1 = 0;
     m_pin2 = 0;
+    m_automaticBus = 0;
 }
 
 Connection::~Connection()
@@ -80,4 +81,10 @@ PinView* Connection::pin1() const
 PinView* Connection::pin2() const
 {
     return m_pin2;
+}
+
+void Connection::setAutomaticBus(AutomaticBus *bus)
+{
+    AutomaticBus *b = new AutomaticBus(*bus);
+    m_automaticBus = b;
 }

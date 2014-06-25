@@ -22,6 +22,11 @@ void ComponentModel::addVisualElement(VisualComponentElement *element)
     else if(t)
         addText(t);
 }
+void ComponentModel::addAttribute(Attribute* attribute)
+{
+    m_attributes.append(attribute);
+}
+
 void ComponentModel::addRectangle(VisualRectangle *rect)
 {
     VisualRectangle *r = new VisualRectangle(rect);

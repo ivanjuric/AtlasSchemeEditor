@@ -1,13 +1,16 @@
-#include <QGraphicsItem>
+#include "qgraphicsitem.h"
 #include "Enums.h"
 #include "pinmodel.h"
 
 #ifndef PINVIEW_H
 #define PINVIEW_H
 
+#pragma once
+
+
 class Connection;
 class ComponentView;
-
+class RegularBusView;
 
 class PinView : public QGraphicsItem
 {
@@ -31,6 +34,8 @@ public:
     QColor fillColorConnected() { return m_fillColorConnected; }
 
     ComponentView *parentComponent() { return m_parentComponent; }
+    RegularBusView *parentBus() { return m_parentBus; }
+    QString parentInstanceName() { return m_parentInstanceName; }
 
     // Setters
     void setUid(int uid) { m_uid = uid; }
@@ -49,6 +54,7 @@ public:
     void setFillColorConnected(QColor fillColorConnected) { m_fillColorConnected = fillColorConnected; }
 
     void setParentComponent(ComponentView *parentComponent);
+    void setParentBus(RegularBusView *parentBus);
     void setParentInstanceName(QString name) {m_parentInstanceName = name;}
 
 private:
@@ -70,7 +76,12 @@ private:
     QString m_checkConnection;
 
     ComponentView *m_parentComponent;
+    RegularBusView *m_parentBus;
+
     QString m_parentInstanceName;
+
+
+
 
 
 
@@ -93,7 +104,7 @@ public:
     enum { Type = QGraphicsItem::UserType + 1 };
     enum { NamePort = 1, TypePort = 2 };
     int type() const { return Type; }
-    bool isConnected(PinView*);
+    bool isConnected();
     void setComponent(ComponentView *c);
     void setSide(QString side);
 
@@ -115,6 +126,7 @@ private:
     void copyPin(PinView *pin);
     int margin;
     void updatePositionAfterMirror();
+    void updateLabelPosition();
 
 };
 

@@ -31,7 +31,13 @@ SOURCES += main.cpp\
     automaticbus.cpp \
     pinmodel.cpp \
     componentmodel.cpp \
-    regularbusview.cpp
+    regularbusview.cpp \
+    attribute.cpp \
+    rulepopup.cpp \
+    pinrulepopup.cpp \
+    regularbusconnectionrule.cpp \
+    automaticbusconnectionrule.cpp \
+    automaticbusconnectionrulecomponent.cpp
 
 HEADERS  += schemeeditormainwindow.h \
     libraryfile.h \
@@ -52,7 +58,13 @@ HEADERS  += schemeeditormainwindow.h \
     Enums.h \
     pinmodel.h \
     componentmodel.h \
-    regularbusview.h
+    regularbusview.h \
+    attribute.h \
+    rulepopup.h \
+    pinrulepopup.h \
+    regularbusconnectionrule.h \
+    automaticbusconnectionrule.h \
+    automaticbusconnectionrulecomponent.h
 
 FORMS    += schemeeditormainwindow.ui
 

@@ -1,6 +1,3 @@
-#ifndef SCHEMEEDITORMAINWINDOW_H
-#define SCHEMEEDITORMAINWINDOW_H
-
 #include "componentview.h"
 #include "editorgraphicsview.h"
 #include "libraryfile.h"
@@ -14,6 +11,12 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QSignalMapper>
+
+#ifndef SCHEMEEDITORMAINWINDOW_H
+#define SCHEMEEDITORMAINWINDOW_H
+
+#pragma once
+
 
 namespace Ui {
 class SchemeEditorMainWindow;
@@ -41,9 +44,12 @@ public slots:
     void saveSceneToFile();
     void loadSceneFromFile();
     void AddComponentToScene(QString id);
-    void AddBusToScene(int id);
+    void AddBusToScene(QString id);
     void mirror(QString instanceName);
+    void deleteItem(QString instanceName);
     void clearScene();
+    
+    void createComponentContextMenu(QString instanceName);
 
 
 signals:
@@ -52,12 +58,32 @@ signals:
 private:
     void createActions();
     bool isComponentInScene(int uid);
-    bool isBusInScene(int uid);
+    bool isSameBusInScene(QString id);
     QGraphicsItem *itemAt(const QPointF&);
 
     QSignalMapper *componentsSignalMapper;
+    QSignalMapper *busSignalMapper;
     QSignalMapper *contextMenuSignalMapper;
-    QSignalMapper *signalMapper;
+
+    
+    QSignalMapper *componentContextMenuSignalMapper;
+    
+    // Context menus, actions and signal mappers
+    QMenu *componentContextMenu;
+    QMenu *busContextMenu;
+    QMenu *connectionContextMenu;
+
+    QAction *actionMirrorComponent;
+    QAction *actionDeleteItem;
+
+    QSignalMapper *mirrorComponentSignalMapper;
+    QSignalMapper *deleteItemSignalMapper;
+
+    void createContextMenus();
+
+    void removeItemFromScene(QString instanceName);
+    void deleteConnections(QGraphicsItem *parent);
+    bool isConnectionFromPin(Connection *connection, QString parentComponentInstanceName);
 
     LibraryFile *library;
 
@@ -65,6 +91,9 @@ private:
     QGraphicsScene *scene;
 
     Connection *conn;
+
+//    QList<Connection*> connections;
+//    QVector<AutomaticBus*> automaticBuses;
 
     //QAction *actionMirror;
     void deleteItem(QGraphicsItem *item);
@@ -74,10 +103,30 @@ private:
     void updateConnections();
 
     QGraphicsItem *activeItem;
+    Connection *activeConnection;
+
+    QString createUniqueInstanceName(QString name, int num);
+
+    bool isConnectionAllowed(PinView *pin1, PinView *pin2);
+    bool checkRegularBusRule(PinView *pin1, PinView *pin2);
+    QString checkAutomaticBusRule(PinView *pin1, PinView *pin2);
+
+    int getNumberOfSameBusesInScene(QString id);
+    int findBusNameIndex(QString id);
+
+    QVector<Connection*> getConnectionsFromScene();
+    QVector<AutomaticBus*> getAutomaticBusesFromScene();
+
+    QPixmap getIconPixmap(QString path);
 
 
 protected:
     void contextMenuEvent(QContextMenuEvent *event);
+
+//    virtual void dragEnterEvent(QDragEnterEvent *event);
+//    virtual void dragLeaveEvent(QDragLeaveEvent *event);
+//    virtual void dragMoveEvent(QDragMoveEvent *event);
+//    virtual void dropEvent(QDropEvent *event);
 };
 
 #endif // SCHEMEEDITORMAINWINDOW_H

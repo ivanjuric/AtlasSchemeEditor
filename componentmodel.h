@@ -1,14 +1,18 @@
+#include "attribute.h"
 #include "pinview.h"
 #include "visualcircle.h"
 #include "visualcomponentelement.h"
 #include "visualrectangle.h"
 #include "visualtext.h"
 
-#include <QString>
+#include "qstring.h"
 #include <QVector>
 
 #ifndef COMPONENTMODEL_H
 #define COMPONENTMODEL_H
+
+#pragma once
+
 
 class ComponentModel
 {
@@ -27,6 +31,7 @@ public:
     QString comdelFile() { return m_comdelFile; }
     QVector<VisualComponentElement*> visualElements() { return m_visualElements; }
     QVector<PinModel*> pins() { return m_pins; }
+    QVector<Attribute*> attributes() { return m_attributes; }
 
     // Setters
     void setId(QString id) { m_id = id; }
@@ -42,6 +47,7 @@ public:
     // Methods
     void addPin(PinModel *pin);
     void addVisualElement(VisualComponentElement *element);
+    void addAttribute(Attribute* attribute);
 
 private:
     QString m_id;
@@ -54,6 +60,7 @@ private:
     QString m_comdelFile;
     QVector<VisualComponentElement*> m_visualElements;
     QVector<PinModel*> m_pins;
+    QVector<Attribute*> m_attributes;
 
 private:
     // Helper methods for copying from existing model

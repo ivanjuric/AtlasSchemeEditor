@@ -9,7 +9,8 @@
 #include <QMenu>
 #include <QWheelEvent>
 #include <QContextMenuEvent>
-#include <QGraphicsItem>
+#include <QMessageBox>
+#include "qgraphicsitem.h"
 
 SchemeEditorMainWindow::SchemeEditorMainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -29,7 +30,35 @@ SchemeEditorMainWindow::SchemeEditorMainWindow(QWidget *parent) :
     library = new LibraryFile(filePath);
     fillToolbar();
 
+    createContextMenus();
+
 }
+
+void SchemeEditorMainWindow::createContextMenus()
+{
+    // Create context menus
+    componentContextMenu = new QMenu(this);
+    busContextMenu = new QMenu(this);
+    connectionContextMenu = new QMenu(this);
+
+    //Create actions
+    actionMirrorComponent = new QAction(tr("&Mirror"), this);
+    actionDeleteItem = new QAction(tr("&Delete"), this);
+
+
+    // Create signal mappers and connect actions to them
+
+
+
+    // Add actions to context menu
+    componentContextMenu->addAction(actionMirrorComponent);
+    componentContextMenu->addAction(actionDeleteItem);
+
+
+//    contextMenuSignalMapper->setMapping(actionMirror,component->instanceName());
+//    connect(actionMirror, SIGNAL(triggered()), contextMenuSignalMapper, SLOT(map()));
+}
+
 void SchemeEditorMainWindow::selectLibrary()
 {
     QString fileName = QFileDialog::getOpenFileName(this,tr("Open config file"),"",tr("Config JSON file (*.json)"));
@@ -44,11 +73,71 @@ void SchemeEditorMainWindow::selectLibrary()
         this->setWindowTitle(library->libraryTitle);
     }
 }
+// Add selected component to graphics scene
+void SchemeEditorMainWindow::AddComponentToScene(QString id)
+{
+    ComponentModel *model = library->getComponentById(id);
+    if(model == 0)
+        return;
+
+    int numberOfSameComponents = getNumberOfSameComponentsInScene(model->instanceNameBase());
+    if(model->maxInstances() != 0 && numberOfSameComponents >= model->maxInstances())
+        return;
+
+    // Create new component and rewrite importnant properties
+    ComponentView *c = new ComponentView(model, QPoint(0,0));
+    int instanceNameIndex = findComponentNameIndex(c->instanceNameBase());
+    QString instanceName = createUniqueInstanceName(c->instanceNameBase(), instanceNameIndex);
+    //c->setUniqueInstanceName(instanceNameIndex);
+    c->setInstanceName(instanceName);
+    c->setParentToPins();
+    foreach(PinView *pin, c->pins())
+    {
+        pin->setStartPosition();
+        pin->setFlag(QGraphicsItem::ItemIsMovable,false);
+        pin->setLabel();
+        pin->setParentItem(c);
+    }
+    c->setMirrored(false);
+
+//    mirrorComponentSignalMapper->setMapping(actionMirrorComponent, c->instanceName());
+//    deleteItemSignalMapper->setMapping(actionDeleteItem, c->instanceName());
+    
+    scene->addItem(c);
+}
+
+// Add selected bus to graphics scene
+void SchemeEditorMainWindow::AddBusToScene(QString id)
+{
+    Bus *bus = library->GetBusByUniqueId(id);
+    if(bus == 0 || isSameBusInScene(bus->id()))
+        return;
+
+    // Create new component and rewrite importnant properties
+    RegularBusView *b = new RegularBusView((RegularBus*)bus, QPoint(0,0));
+
+    int instanceNameIndex = findBusNameIndex(b->id());
+    QString instanceName = createUniqueInstanceName(b->id(), instanceNameIndex);
+    b->setInstanceName(instanceName);
+
+    foreach(PinView *pin, b->busPins())
+    {
+        pin->setStartPosition();
+        pin->setFlag(QGraphicsItem::ItemIsMovable,false);
+        pin->setParentItem(b);
+    }
+    b->setLabel();
+    scene->addItem(b);
+}
 void SchemeEditorMainWindow::fillToolbar()
 {
     foreach (ComponentModel *c, library->componentList)
     {
-        QAction *actionAddFromToolbar = new QAction(c->id(),this);
+        QAction *actionAddFromToolbar = new QAction(this);
+        actionAddFromToolbar->setIcon(getIconPixmap(c->iconFile()));
+        actionAddFromToolbar->setIconText(c->id());
+        actionAddFromToolbar->setIconVisibleInMenu(true);
+
         componentsSignalMapper->setMapping(actionAddFromToolbar,c->id());
         connect(actionAddFromToolbar, SIGNAL(triggered()), componentsSignalMapper, SLOT(map()));
         ui->toolBar->addAction(actionAddFromToolbar);
@@ -58,12 +147,22 @@ void SchemeEditorMainWindow::fillToolbar()
 
     foreach(Bus *bus, library->regularBuses)
     {
-        QAction *actionAddFromToolbar = new QAction(bus->ID,this);
-        signalMapper->setMapping(actionAddFromToolbar,bus->uid);
-        connect(actionAddFromToolbar, SIGNAL(triggered()), signalMapper, SLOT(map()));
+        QAction *actionAddFromToolbar = new QAction(bus->id(),this);
+        busSignalMapper->setMapping(actionAddFromToolbar,bus->id());
+        connect(actionAddFromToolbar, SIGNAL(triggered()), busSignalMapper, SLOT(map()));
         ui->toolBar->addAction(actionAddFromToolbar);
     }
 }
+QPixmap SchemeEditorMainWindow::getIconPixmap(QString iconFile)
+{
+    QFileInfo inf(iconFile);
+    QDir dir = inf.dir();
+    QString path = dir.toNativeSeparators(dir.absoluteFilePath(inf.fileName()));
+    QPixmap pix(path);
+
+    return pix;
+}
+
 void SchemeEditorMainWindow::clearSceneView()
 {
     clearConnections();
@@ -152,80 +251,45 @@ void SchemeEditorMainWindow::createActions()
 
     contextMenuSignalMapper = new QSignalMapper(this);
     connect(contextMenuSignalMapper, SIGNAL(mapped(QString)),this,SLOT(mirror(QString)));
+    
+    // Context menu signal mappers
+    componentContextMenuSignalMapper = new QSignalMapper(this);
+    connect(componentContextMenuSignalMapper, SIGNAL(mapped(QString)),this,SLOT(createComponentContextMenu(QString)));
+    
 
-    signalMapper = new QSignalMapper(this);
-    connect(signalMapper, SIGNAL(mapped(int)),this,SLOT(AddBusToScene(int)));
 
 
-//    ui->actionSelectLibrary->setIcon(QIcon(":images/open-file-icon.png"));
-//    ui->actionSelectLibrary->setStatusTip(tr("Select library file"));
-//    ui->actionSelectLibrary->setToolTip("Select library file");
+    mirrorComponentSignalMapper = new QSignalMapper(this);
+    connect(mirrorComponentSignalMapper, SIGNAL(mapped(QString)), this, SLOT(mirror(QString)));
+
+    deleteItemSignalMapper = new QSignalMapper(this);
+    connect(deleteItemSignalMapper, SIGNAL(mapped(QString)), this, SLOT(deleteItem(QString)));
+
+
+
+
+
+    busSignalMapper = new QSignalMapper(this);
+    connect(busSignalMapper, SIGNAL(mapped(QString)),this,SLOT(AddBusToScene(QString)));
+
     connect(ui->actionSelectLibrary, SIGNAL(triggered()), this, SLOT(selectLibrary()));
     ui->mainToolBar->addAction(ui->actionSelectLibrary);
 
     connect(ui->actionSave, SIGNAL(triggered()), this, SLOT(saveSceneToFile()));
     ui->mainToolBar->addAction(ui->actionSave);
 
-
     connect(ui->actionLoad, SIGNAL(triggered()), this, SLOT(loadSceneFromFile()));
     ui->mainToolBar->addAction(ui->actionLoad);
 
-
-
     connect(ui->actionClearScene, SIGNAL(triggered()), this, SLOT(clearScene()));
     ui->mainToolBar->addAction(ui->actionClearScene);
-
 }
-// Add selected component to graphics scene
-void SchemeEditorMainWindow::AddComponentToScene(QString id)
+
+void SchemeEditorMainWindow::createComponentContextMenu(QString instanceName)
 {
-    ComponentModel *model = library->getComponentById(id);
-    //int numberOfSameComponents = getNumberOfSameComponentsInScene(component->instanceNameBase());
-
-    if(model == 0)
-        return;
-
-    int numberOfSameComponents = getNumberOfSameComponentsInScene(model->instanceNameBase());
-    if(model->maxInstances() != 0 && numberOfSameComponents >= model->maxInstances())
-        return;
-
-    // Create new component and rewrite importnant properties
-    ComponentView *c = new ComponentView(model, QPoint(0,0));
-    int instanceNameIndex = findComponentNameIndex(c->instanceNameBase());
-    c->setUniqueInstanceName(instanceNameIndex);
-    c->setParentToPins();
-    foreach(PinView *pin, c->pins())
-    {
-        pin->setStartPosition();
-        pin->setFlag(QGraphicsItem::ItemIsMovable,false);
-        pin->setParentItem(c);
-    }
-    c->setMirrored(false);
-    scene->addItem(c);
+    
 }
 
-// Add selected bus to graphics scene
-void SchemeEditorMainWindow::AddBusToScene(int id)
-{
-    Bus *bus = library->GetBusByUniqueId(id);
-
-
-    if(bus == 0 || isBusInScene(bus->uid))
-        return;
-
-
-    // Create new component and rewrite importnant properties
-    RegularBusView *b = new RegularBusView(0,0,(RegularBus*)bus);
-
-    scene->addItem(b);
-
-    foreach(PinView *pin, b->busPins)
-    {
-        pin->setStartPosition();
-        pin->setFlag(QGraphicsItem::ItemIsMovable,false);
-        pin->setParentItem(b);
-    }
-}
 
 // Check if component is already attached to graphics scene
 bool SchemeEditorMainWindow::isComponentInScene(int uid)
@@ -239,13 +303,12 @@ bool SchemeEditorMainWindow::isComponentInScene(int uid)
     return false;
 }
 // Check if component is already attached to graphics scene
-bool SchemeEditorMainWindow::isBusInScene(int uid)
+bool SchemeEditorMainWindow::isSameBusInScene(QString id)
 {
     QList<QGraphicsItem*> items = scene->items();
     for(int i = 0; i < items.length(); i++){
         RegularBusView *b = dynamic_cast<RegularBusView*>(items[i]);
-        //ComponentView *c = (ComponentView*)items[i];
-        if(b && b->model && b->model->uid && b->model->uid == uid)
+        if(b && b->id() == id)
             return true;
     }
     return false;
@@ -270,7 +333,6 @@ QGraphicsItem* SchemeEditorMainWindow::itemAt(const QPointF &pos)
 bool SchemeEditorMainWindow::eventFilter(QObject *o, QEvent *e)
 {
     QGraphicsSceneMouseEvent *me = (QGraphicsSceneMouseEvent*) e;
-
     switch ((int) e->type())
     {
         case QEvent::GraphicsSceneMousePress:
@@ -281,15 +343,17 @@ bool SchemeEditorMainWindow::eventFilter(QObject *o, QEvent *e)
                 {
                     QGraphicsItem *item = itemAt(me->scenePos());
 
-                    if (item && item->type() == PinView::Type)
-                    {
-                        QGraphicsItem *parent = item->parentItem();
-                        if(parent && parent->type() == RegularBusView::Type)
-                            break;
+                    if(item == 0)
+                        return false;
 
+                    if (item->type() == PinView::Type)
+                    {
+                        PinView *pin1 = (PinView*)item;
+                        if(pin1->side() == PinSideEnum::None)
+                            return false;
                         conn = new Connection(0);
                         scene->addItem(conn);
-                        PinView *pin1 = (PinView*)item;
+
                         conn->setPin1(pin1);
                         QPointF startP = pin1->scenePos();
                         startP.setX(startP.x() + pin1->width()/2);
@@ -300,7 +364,7 @@ bool SchemeEditorMainWindow::eventFilter(QObject *o, QEvent *e)
 
                         return true;
                     }
-                    else if (item && item->type() == ComponentView::Type)
+                    else if (item->type() == ComponentView::Type)
                     {
                         /* if (selBlock)
                             selBlock->setSelected(); */
@@ -311,23 +375,24 @@ bool SchemeEditorMainWindow::eventFilter(QObject *o, QEvent *e)
                 case Qt::RightButton:
                 {
                     activeItem = 0;
+                    QGraphicsItem *item = itemAt(me->scenePos());
+                    if (item == 0)
+                        return false;
+
                     QPointF pointF = me->scenePos();
                     QPoint *point = new QPoint();
                     point->setX((int)pointF.x());
                     point->setY((int)pointF.y());
-                    QGraphicsItem *item = itemAt(me->scenePos());
 
-                    if (item)
+                    if((item->type() == Connection::Type || item->type() == ComponentView::Type) || item->type() == RegularBusView::Type)
                     {
-                        if((item->type() == Connection::Type || item->type() == ComponentView::Type) || item->type() == RegularBusView::Type)
-                        {
-                            activeItem = item;
-                            //deleteItem(item);
-                            QContextMenuEvent *ev = new QContextMenuEvent(QContextMenuEvent::Mouse, *point,QCursor::pos());
-                            QApplication::postEvent(this,ev);
-                        }
-
+                        activeItem = item;
+                        //deleteItem(item);
+                        QContextMenuEvent *ev = new QContextMenuEvent(QContextMenuEvent::Mouse, *point,QCursor::pos());
+                        QApplication::postEvent(this,ev);
                     }
+
+
                     // if (selBlock == (QNEBlock*) item)
                         // selBlock = 0;
                     break;
@@ -354,13 +419,47 @@ bool SchemeEditorMainWindow::eventFilter(QObject *o, QEvent *e)
                     PinView *pin1 = conn->pin1();
                     PinView *pin2 = (PinView*) item;
 
-                    if (pin1->parentComponent() != pin2->parentComponent()  && !pin1->isConnected(pin2))
+                    if(!isConnectionAllowed(pin1,pin2))
                     {
-                        conn->setPos2(pin2->centerPos((PinView*)item));
-                        conn->setPin2(pin2);
-                        conn->updatePath();
+                        delete conn;
                         conn = 0;
                         return true;
+                    }
+
+
+                    // Create connection between component and bus
+                    if(pin1->parentComponent() && pin2->parentBus())
+                    {
+                        if(checkRegularBusRule(pin1, pin2))
+                        {
+                            conn->setPos2(pin2->centerPos((PinView*)item));
+                            conn->setPin2(pin2);
+                            conn->updatePath();
+                            conn = 0;
+                            return true;
+                        }
+                    }
+                    // Create connection between two components and create automatic bus
+                    else if (pin1->parentComponent() && pin2->parentComponent())
+                    {
+                        QString busID = checkAutomaticBusRule(pin1,pin2);
+                        if(busID != "")
+                        {
+                            AutomaticBus *a = library->getAutomaticBusById(busID);
+                            if(a)
+                            {
+                                QVector<AutomaticBus*> ab = getAutomaticBusesFromScene();
+                                int num = ab.length() + 1;
+                                QString instanceName = createUniqueInstanceName(a->id(), num);
+                                a->setInstanceName(instanceName);
+                                conn->setAutomaticBus(a);
+                                conn->setPos2(pin2->centerPos((PinView*)item));
+                                conn->setPin2(pin2);
+                                conn->updatePath();
+                                conn = 0;
+                                return true;
+                            }
+                        }
                     }
                 }
 
@@ -373,27 +472,87 @@ bool SchemeEditorMainWindow::eventFilter(QObject *o, QEvent *e)
     }
     return QObject::eventFilter(o, e);
 }
-void SchemeEditorMainWindow::deleteItem(QGraphicsItem *item)
+
+
+bool SchemeEditorMainWindow::isConnectionAllowed(PinView *pin1, PinView *pin2)
 {
+    if(!(pin1 && pin2))
+        return false;
+    if (pin1->parentComponent() == pin2->parentComponent())
+        return false;
+    if (pin1->isConnected() || pin2->isConnected())
+        return false;
 
+    return true;
 }
+bool SchemeEditorMainWindow::checkRegularBusRule(PinView *pin1, PinView *pin2)
+{
+    ComponentView *component = dynamic_cast<ComponentView*>(pin1->parentComponent());
+    RegularBusView *bus = dynamic_cast<RegularBusView*>(pin2->parentBus());
 
+    if(!(component && bus))
+        return false;
+
+    foreach(RegularBusConnectionRule *rule, library->regularBusConnectionRules)
+    {
+        if(rule->componentId() == component->id() && rule->busId() == bus->id() && rule->componentVisualPinId() == pin1->id())
+            return true;
+    }
+    return false;
+}
+QString SchemeEditorMainWindow::checkAutomaticBusRule(PinView *pin1, PinView *pin2)
+{
+    ComponentView *component1 = dynamic_cast<ComponentView*>(pin1->parentComponent());
+    ComponentView *component2 = dynamic_cast<ComponentView*>(pin2->parentComponent());
+
+    if(!(pin1 && pin2 && component1 && component2))
+        return false;
+
+    foreach(AutomaticBusConnectionRule *rule, library->automaticBusConnectionRules)
+    {
+        if(!(rule->firstComponent() && rule->secondComponent()))
+            continue;
+
+        QString c1 = rule->firstComponent()->componentId();
+        QString c2 = rule->secondComponent()->componentId();
+        QString p1 = rule->firstComponent()->componentVisualPinId();
+        QString p2 = rule->secondComponent()->componentVisualPinId();
+
+        if(c1 == component1->id() && c2 == component2->id() && p1 == pin1->id() && p2 == pin2->id()
+           || (c2 == component1->id() && c1 == component2->id() && p2 == pin1->id() && p1 == pin2->id()))
+            return rule->busId();
+    }
+    return "";
+}
 void SchemeEditorMainWindow::contextMenuEvent(QContextMenuEvent *event)
 {
     if(event->reason() == QContextMenuEvent::Mouse)
     {
+
         ComponentView *component = dynamic_cast<ComponentView*>(activeItem);
         if(component)
         {
             QAction *actionMirror = new QAction(tr("&Mirror"), this);
-            actionMirror->setStatusTip(tr("Mirror component pins"));
-            // Map components actions to context menu
-            contextMenuSignalMapper->setMapping(actionMirror,component->instanceName());
-            connect(actionMirror, SIGNAL(triggered()), contextMenuSignalMapper, SLOT(map()));
+            mirrorComponentSignalMapper->setMapping(actionMirror, component->instanceName());
+            connect(actionMirror, SIGNAL(triggered()), mirrorComponentSignalMapper, SLOT(map()));
 
-            QMenu menu(this);
-            menu.addAction(actionMirror);
-            menu.exec(event->globalPos());
+            QAction *actionDeleteItem = new QAction(tr("&Delete"), this);
+            deleteItemSignalMapper->setMapping(actionDeleteItem, component->instanceName());
+            connect(actionDeleteItem, SIGNAL(triggered()), deleteItemSignalMapper, SLOT(map()));
+
+
+
+            QMenu *contextMenu = new QMenu(this);
+            contextMenu->addAction(actionMirror);
+            contextMenu->addAction(actionDeleteItem);
+            contextMenu->exec(event->globalPos());
+
+
+            //componentContextMenu->exec(event->globalPos());
+        }
+        Connection *connection = dynamic_cast<Connection*>(activeItem);
+        if(connection)
+        {
         }
     }
 }
@@ -407,7 +566,47 @@ void SchemeEditorMainWindow::mirror(QString instanceName)
         scene->update();
         ui->graphicsView->update();
         updateConnections();
-        //ui->graphicsView->viewport()->update();
+    }
+}
+void SchemeEditorMainWindow::deleteItem(QString instanceName)
+{
+    ComponentView *c = getComponentFromScene(instanceName);
+    if(c)
+    {
+        QMessageBox msgBox;
+        msgBox.setWindowTitle("Delete item");
+        msgBox.setText("Are you sure you want to delete this item?");
+        msgBox.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
+        msgBox.setDefaultButton(QMessageBox::Cancel);
+        int ret = msgBox.exec();
+        if(ret == QMessageBox::Ok)
+        {
+            QString name = c->instanceName();
+            //scene->removeItem(c);
+            removeItemFromScene(name);
+            scene->update();
+            ui->graphicsView->update();
+            //updateConnections();
+        }
+    }
+
+    scene->update();
+    ui->graphicsView->update();
+    ui->graphicsView->viewport()->update();
+}
+
+void SchemeEditorMainWindow::removeItemFromScene(QString instanceName)
+{
+    QString name = instanceName;
+    for(int i = 0; i < scene->items().length(); i++)
+    {
+        ComponentView *c = dynamic_cast<ComponentView*>(scene->items()[i]);
+        if(c && c->instanceName() == name)
+        {
+            deleteConnections(c);
+            scene->removeItem(scene->items()[i]);
+            return;
+        }
     }
 }
 
@@ -438,6 +637,19 @@ int SchemeEditorMainWindow::getNumberOfSameComponentsInScene(QString baseName)
     }
     return total;
 }
+int SchemeEditorMainWindow::getNumberOfSameBusesInScene(QString id)
+{
+    QList<QGraphicsItem*> items = scene->items();
+
+    int total = 0;
+    for(int i = 0; i < items.length(); i++)
+    {
+        RegularBusView *b = dynamic_cast<RegularBusView*>(items[i]);
+        if(b && b->id().toLower() == id.toLower())
+            total++;
+    }
+    return total;
+}
 
 int SchemeEditorMainWindow::findComponentNameIndex(QString baseName)
 {
@@ -447,7 +659,6 @@ int SchemeEditorMainWindow::findComponentNameIndex(QString baseName)
     for(int i = 0; i < items.length(); i++)
     {
         ComponentView *c = dynamic_cast<ComponentView*>(items[i]);
-        //ComponentView *c = (ComponentView*)items[i];
         if(c && c->instanceNameBase().toLower() == baseName.toLower())
         {
             QStringList splitArray = c->instanceName().split('_');
@@ -456,6 +667,27 @@ int SchemeEditorMainWindow::findComponentNameIndex(QString baseName)
         }
     }
     int existingComponents = getNumberOfSameComponentsInScene(baseName);
+    if(existingComponents > max)
+        max = existingComponents;
+
+    return max + 1;
+}
+int SchemeEditorMainWindow::findBusNameIndex(QString id)
+{
+    QList<QGraphicsItem*> items = scene->items();
+
+    int max = 0;
+    for(int i = 0; i < items.length(); i++)
+    {
+        RegularBusView *b = dynamic_cast<RegularBusView*>(items[i]);
+        if(b && b->id().toLower() == id.toLower())
+        {
+            QStringList splitArray = b->instanceName().split('_');
+            if(splitArray.length() == 2 && splitArray[1].toInt() > max)
+                max = splitArray[1].toInt();
+        }
+    }
+    int existingComponents = getNumberOfSameBusesInScene(id);
     if(existingComponents > max)
         max = existingComponents;
 
@@ -471,3 +703,86 @@ void SchemeEditorMainWindow::updateConnections()
             c->updatePath();
     }
 }
+void SchemeEditorMainWindow::deleteConnections(QGraphicsItem *parent)
+{
+    ComponentView *comp = dynamic_cast<ComponentView*>(parent);
+    foreach (QGraphicsItem *item, scene->items())
+    {
+        if(comp)
+        {
+            Connection *c = dynamic_cast<Connection*>(item);
+            if(c && isConnectionFromPin(c, comp->instanceName()))
+                delete item;
+
+        }
+    }
+}
+
+bool SchemeEditorMainWindow::isConnectionFromPin(Connection *connection, QString parentComponentInstanceName)
+{
+    QString pin1Name;
+    QString pin2Name;
+
+    if(connection && connection->pin1() && connection->pin2() && connection->pin1()->parentComponent() && connection->pin2()->parentComponent())
+    {
+        pin1Name = connection->pin1()->parentInstanceName();
+        pin2Name = connection->pin2()->parentInstanceName();
+
+        if(pin1Name == parentComponentInstanceName || pin2Name == parentComponentInstanceName)
+            return true;
+    }
+    return false;
+}
+
+QString SchemeEditorMainWindow::createUniqueInstanceName(QString name, int num = 0)
+{
+    if(num > 0)
+        return QString(name + "_" + QString::number(num).rightJustified(3,'0'));
+    else
+        return name;
+}
+QVector<Connection*> SchemeEditorMainWindow::getConnectionsFromScene()
+{
+    QVector<Connection*> conns;
+
+    for(int i = 0; i < scene->items().length(); i++)
+    {
+        Connection *c = dynamic_cast<Connection*>(scene->items()[i]);
+        if(c)
+            conns.append(c);
+    }
+
+    return conns;
+}
+QVector<AutomaticBus*> SchemeEditorMainWindow::getAutomaticBusesFromScene()
+{
+    QVector<AutomaticBus*> automaticBuses;
+
+    for(int i = 0; i < scene->items().length(); i++)
+    {
+        Connection *c = dynamic_cast<Connection*>(scene->items()[i]);
+        if(c && c->automaticBus())
+            automaticBuses.append(c->automaticBus());
+    }
+
+    return automaticBuses;
+}
+
+
+//void SchemeEditorMainWindow::dragEnterEvent(QDragEnterEvent *event)
+//{
+
+//}
+//void SchemeEditorMainWindow::dragLeaveEvent(QDragLeaveEvent *event)
+//{
+
+//}
+//void SchemeEditorMainWindow::dragMoveEvent(QDragMoveEvent *event)
+//{
+
+//}
+//void SchemeEditorMainWindow::dropEvent(QDropEvent *event)
+//{
+
+//}
+

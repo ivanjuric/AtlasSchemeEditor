@@ -1,10 +1,10 @@
-#include <QColor>
-#include <QString>
+#include <QtGui>
 #include "Enums.h"
 
 #ifndef PINMODEL_H
 #define PINMODEL_H
 
+#pragma once
 
 class PinModel
 {

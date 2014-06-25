@@ -3,6 +3,9 @@
 #ifndef VISUALTEXT_H
 #define VISUALTEXT_H
 
+#pragma once
+
+
 class VisualText : public VisualComponentElement
 {
 public:

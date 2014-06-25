@@ -3,6 +3,9 @@
 #ifndef VISUALCIRCLE_H
 #define VISUALCIRCLE_H
 
+#pragma once
+
+
 class VisualCircle  : public VisualComponentElement
 {
 public:

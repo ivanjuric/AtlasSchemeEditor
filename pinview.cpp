@@ -1,6 +1,7 @@
 #include "pinview.h"
 #include "connection.h"
 #include "componentview.h"
+#include "regularbusview.h"
 #include <QStyle>
 #include <QStyleOptionGraphicsItem>
 #include <QPen>
@@ -23,6 +24,8 @@ PinView::PinView(PinModel *model)
     setFillColor(model->fillColor());
     setLineColorConnected(model->lineColorConnected());
     setFillColorConnected(model->fillColorConnected());
+    m_parentBus = 0;
+    m_parentComponent = 0;
 
     label = new QGraphicsTextItem(this);
     margin = 2;
@@ -35,7 +38,11 @@ void PinView::setParentComponent(ComponentView *parentComponent)
     m_parentComponent = parentComponent;
     setParentInstanceName(parentComponent->instanceName());
 }
-
+void PinView::setParentBus(RegularBusView *parentBus)
+{
+    m_parentBus = parentBus;
+    setParentInstanceName(parentBus->instanceName());
+}
 QRectF PinView::boundingRect() const
 {
     QRect r(m_x, m_y, m_width, m_height);
@@ -80,17 +87,29 @@ void PinView::drawPin(QPainter *painter, PinTypeEnum type)
             break;
         case PinTypeEnum::SquareIn:
             drawSquare(painter);
-            drawLR(painter);
+            if(side() == PinSideEnum::Left)
+                drawLR(painter);
+            else
+                drawRL(painter);
             break;
         case PinTypeEnum::SquareOut:
             drawSquare(painter);
-            drawRL(painter);
+            if(side() == PinSideEnum::Left)
+                drawRL(painter);
+            else
+                drawLR(painter);
             break;
         case PinTypeEnum::In:
-            drawLR(painter);
+            if(side() == PinSideEnum::Left)
+                drawLR(painter);
+            else
+                drawRL(painter);
             break;
         case PinTypeEnum::Out:
-            drawRL(painter);
+            if(side() == PinSideEnum::Left)
+                drawRL(painter);
+            else
+                drawLR(painter);
             break;
         case PinTypeEnum::InOut:
             drawInOut(painter);
@@ -101,7 +120,7 @@ void PinView::drawPin(QPainter *painter, PinTypeEnum type)
 }
 void PinView::drawBusPin(QPainter *painter)
 {
-    QPen pen(Qt::yellow);
+    QPen pen(lineColor());
     painter->setPen(pen);
     painter->setBrush(Qt::transparent);
     painter->drawRect(x(),y(),width(), height());
@@ -159,10 +178,10 @@ QVariant PinView::itemChange(GraphicsItemChange change, const QVariant &value)
     return value;
 }
 
-bool PinView::isConnected(PinView *other)
+bool PinView::isConnected()
 {
     foreach(Connection *conn, connections)
-        if (conn->pin1() == other || conn->pin2() == other)
+        if (conn->pin1() == this && conn->pin2() != 0)
             return true;
 
     return false;
@@ -209,22 +228,7 @@ void PinView::setLabel()
     label->setPlainText(this->id().toUpper());
     label->setFont(QFont("Arial", 5));
 
-    QRectF r = label->boundingRect();
-
-    QPointF *point = this->getStartPosition();
-
-    if (side() == PinSideEnum::Left)
-    {
-        point->setX(point->x() + width());
-        point->setY(point->y() + height()/2 - r.height()/2);
-        label->setPos(*point);
-    }
-    else if(side() == PinSideEnum::Right)
-    {
-        point->setX(point->x() - r.right());
-        point->setY(point->y() + height()/2 - r.height()/2);
-        label->setPos(*point);
-    }
+    updateLabelPosition();
 }
 
 void PinView::switchSides()
@@ -235,15 +239,39 @@ void PinView::switchSides()
         setSide(PinSideEnum::Left);
 
     updatePositionAfterMirror();
+    updateLabelPosition();
     this->update();
 }
 
 void PinView::updatePositionAfterMirror()
 {
     if(side() == PinSideEnum::Left)
+    {
         setX(x() - parentComponent()->width() - width());
+
+    }
     else if(side() == PinSideEnum::Right)
+    {
         setX(x() + parentComponent()->width() + width());
+    }
+}
+
+void PinView::updateLabelPosition()
+{
+    QPointF point(x(),y());
+    QRectF r = label->boundingRect();
+    if (side() == PinSideEnum::Left)
+    {
+        point.setX(point.x() + width());
+        point.setY(point.y() + height()/2 - r.height()/2);
+        label->setPos(point);
+    }
+    else if(side() == PinSideEnum::Right)
+    {
+        point.setX(point.x() - r.right());
+        point.setY(point.y() + height()/2 - r.height()/2);
+        label->setPos(point);
+    }
 }
 
 

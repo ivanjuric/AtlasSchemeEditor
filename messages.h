@@ -1,7 +1,10 @@
-#include <QString>
+#include "qstring.h"
 
 #ifndef MESSAGES_H
 #define MESSAGES_H
+
+#pragma once
+
 
 class Messages
 {

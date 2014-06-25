@@ -1,6 +1,9 @@
 #ifndef ENUMS_H
 #define ENUMS_H
 
+#pragma once
+
+
 enum class OrientationEnum
 {
     None = 0,
@@ -24,6 +27,11 @@ enum class PinSideEnum
     None = 0,
     Left = 1,
     Right = 2
+};
+enum class PopupTypeEnum
+{
+    Automatic = 1,
+    OnDemand = 2
 };
 
 #endif // ENUMS_H
