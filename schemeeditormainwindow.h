@@ -47,6 +47,7 @@ public slots:
     void AddBusToScene(QString id);
     void mirror(QString instanceName);
     void deleteItem(QString instanceName);
+    void editAttributes(QString instanceName);
     void clearScene();
     
     void createComponentContextMenu(QString instanceName);
@@ -78,6 +79,7 @@ private:
 
     QSignalMapper *mirrorComponentSignalMapper;
     QSignalMapper *deleteItemSignalMapper;
+    QSignalMapper *editAttributesSignalMapper;
 
     void createContextMenus();
 
@@ -118,6 +120,8 @@ private:
     QVector<AutomaticBus*> getAutomaticBusesFromScene();
 
     QPixmap getIconPixmap(QString path);
+
+    void showEditAttribute(Attribute *attribute);
 
 
 protected:

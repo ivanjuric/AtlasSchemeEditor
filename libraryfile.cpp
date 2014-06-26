@@ -207,6 +207,10 @@ void LibraryFile::loadAttributes(QJsonArray attributes, ComponentModel *componen
        if(enums.count() > 0)
            loadAttributeEnumeratedValues(enums, attr);
 
+       QJsonArray rules = attrObject["rules"].toArray();
+       if(rules.count() > 0)
+           loadAttributeRules(rules, attr);
+
        component->addAttribute(attr);
 
     }
@@ -220,6 +224,22 @@ void LibraryFile::loadAttributeEnumeratedValues(QJsonArray enumeratedValues, Att
        int value = enumValObject["value"].toInt();
 
        attribute->addEnumeratedValue(name, value);
+    }
+}
+void LibraryFile::loadAttributeRules(QJsonArray ruleValues, Attribute *attribute)
+{
+    foreach (QJsonValue ruleVal, ruleValues)
+    {
+        QJsonObject ruleObject = ruleVal.toObject();
+        AttributeRule *rule = new AttributeRule();
+        rule->setType(getAttributeRuleTypeFromString(ruleObject["type"].toString()));
+        rule->setCondition(getAttributeRuleConditionFromString(ruleObject["condition"].toString()));
+        foreach(QJsonValue par, ruleObject["parameters"].toArray())
+        {
+            rule->addParameter(par.toString());
+        }
+        rule->setErrorMessage(ruleObject["errorMessage"].toString());
+        attribute->addRule(rule);
     }
 }
 
@@ -380,6 +400,39 @@ AutomaticBusConnectionRuleComponent* LibraryFile::loadAutomaticBusConnectionRule
         comp->addPinIdToInstantiationList(pin.toString());
     }
     return comp;
+}
+
+AttributeRuleTypeEnum LibraryFile::getAttributeRuleTypeFromString(QString type)
+{
+    AttributeRuleTypeEnum t;
+    if(type.toLower() == "error")
+        t = AttributeRuleTypeEnum::Error;
+    else if(type.toLower() == "warning")
+        t = AttributeRuleTypeEnum::Warning;
+    return t;
+}
+AttributeRuleConditionEnum LibraryFile::getAttributeRuleConditionFromString(const QString condition)
+{
+    AttributeRuleConditionEnum c;
+
+    if(condition == "divisible_by_power_of_2")
+        c = AttributeRuleConditionEnum::DivisibleByPowerOf2;
+    else if(condition == "greater_or_equal")
+        c = AttributeRuleConditionEnum::GreaterOrEqual;
+    else if(condition == "less_or_equal")
+        c = AttributeRuleConditionEnum::LessOrEqual;
+    else if(condition == "unique_in_address_space")
+        c = AttributeRuleConditionEnum::UniqueInAddressSpace;
+    else if(condition == "divisible_by")
+        c = AttributeRuleConditionEnum::DivisibleBy;
+    else if(condition == "starts_in_address_space")
+        c = AttributeRuleConditionEnum::StartsInAddressSpace;
+    else if(condition == "ends_in_address_space")
+        c = AttributeRuleConditionEnum::EndsInAddressSpace;
+    else if(condition == "in_range")
+        c = AttributeRuleConditionEnum::InRange;
+
+    return c;
 }
 
 OrientationEnum LibraryFile::getOrientationFromString(QString orientation)

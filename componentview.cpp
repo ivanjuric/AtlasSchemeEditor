@@ -35,7 +35,6 @@ ComponentView::ComponentView(ComponentModel *model, QPoint pos)
     foreach (Attribute *a, model->attributes())
     {
         Attribute *attr = new Attribute(*a);
-        attr->setCurrentValue(a->defaultValue());
         m_attributes.append(attr);
     }
 

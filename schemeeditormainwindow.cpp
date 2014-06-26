@@ -2,6 +2,8 @@
 #include "ui_schemeeditormainwindow.h"
 #include "libraryfile.h"
 #include "regularbusview.h"
+#include "popupnumericvalue.h"
+#include "popupenumeratedvalue.h"
 
 #include <QFileDialog>
 #include <QToolButton>
@@ -103,7 +105,36 @@ void SchemeEditorMainWindow::AddComponentToScene(QString id)
 //    mirrorComponentSignalMapper->setMapping(actionMirrorComponent, c->instanceName());
 //    deleteItemSignalMapper->setMapping(actionDeleteItem, c->instanceName());
     
+    foreach(Attribute *attr, c->attributes())
+    {
+        if(attr->popupType() != PopupTypeEnum::Automatic)
+            continue;
+        showEditAttribute(attr);
+    }
+
     scene->addItem(c);
+}
+void SchemeEditorMainWindow::showEditAttribute(Attribute *attribute)
+{
+    if(attribute->enumeratedValue().count() > 0)
+    {
+        PopupEnumeratedValue *enumPopup = new PopupEnumeratedValue();
+        enumPopup->setScene(scene);
+        //enumPopup->setComponent(c);
+        enumPopup->setComponentAttribute(attribute);
+        enumPopup->fillValues(!attribute->isValueSet());
+        enumPopup->exec();
+    }
+    else
+    {
+        PopupNumericValue *valPopup = new PopupNumericValue();
+        //valPopup->setScene(scene);
+        //valPopup->setComponent(c);
+        valPopup->setComponentAttribute(attribute);
+        valPopup->fillValues(!attribute->isValueSet());
+
+        valPopup->exec();
+    }
 }
 
 // Add selected bus to graphics scene
@@ -264,6 +295,9 @@ void SchemeEditorMainWindow::createActions()
 
     deleteItemSignalMapper = new QSignalMapper(this);
     connect(deleteItemSignalMapper, SIGNAL(mapped(QString)), this, SLOT(deleteItem(QString)));
+
+    editAttributesSignalMapper = new QSignalMapper(this);
+    connect(editAttributesSignalMapper, SIGNAL(mapped(QString)), this, SLOT(editAttributes(QString)));
 
 
 
@@ -540,11 +574,16 @@ void SchemeEditorMainWindow::contextMenuEvent(QContextMenuEvent *event)
             deleteItemSignalMapper->setMapping(actionDeleteItem, component->instanceName());
             connect(actionDeleteItem, SIGNAL(triggered()), deleteItemSignalMapper, SLOT(map()));
 
+            QAction *actionEditAttributes = new QAction(tr("&Edit attributes"), this);
+            editAttributesSignalMapper->setMapping(actionEditAttributes, component->instanceName());
+            connect(actionEditAttributes, SIGNAL(triggered()), editAttributesSignalMapper, SLOT(map()));
+
 
 
             QMenu *contextMenu = new QMenu(this);
             contextMenu->addAction(actionMirror);
             contextMenu->addAction(actionDeleteItem);
+            contextMenu->addAction(actionEditAttributes);
             contextMenu->exec(event->globalPos());
 
 
@@ -593,6 +632,17 @@ void SchemeEditorMainWindow::deleteItem(QString instanceName)
     scene->update();
     ui->graphicsView->update();
     ui->graphicsView->viewport()->update();
+}
+void SchemeEditorMainWindow::editAttributes(QString instanceName)
+{
+    ComponentView *c = getComponentFromScene(instanceName);
+    if(c)
+    {
+        foreach(Attribute *attr, c->attributes())
+        {
+            showEditAttribute(attr);
+        }
+    }
 }
 
 void SchemeEditorMainWindow::removeItemFromScene(QString instanceName)

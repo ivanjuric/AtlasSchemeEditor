@@ -1,6 +1,7 @@
 #include <QString>
 #include "Enums.h"
-#include <QHash>
+#include "attributerule.h"
+#include <QMap>
 
 #ifndef ATTRIBUTE_H
 #define ATTRIBUTE_H
@@ -17,7 +18,9 @@ public:
     PopupTypeEnum popupType() { return m_popupType; }
     int defaultValue() { return m_defaultValue; }
     int currentValue() { return m_currentValue; }
-    QHash<QString, int> enumeratedValue() { return m_enumeratedValue; }
+    QMap<QString, int> enumeratedValue() { return m_enumeratedValue; }
+    bool isValueSet() { return m_isValueSet; }
+    QVector<AttributeRule*> rules() { return m_rules; }
 
     // Setters
     void setId(QString id) { m_id = id; }
@@ -25,8 +28,9 @@ public:
     void setPopupText(QString popupText) { m_popupText = popupText; }
     void setPopupType(PopupTypeEnum popupType) { m_popupType = popupType; }
     void setDefaultValue(int defaultValue) { m_defaultValue = defaultValue; }
-    void setCurrentValue(int currentValue) { m_currentValue = currentValue; }
+    void setCurrentValue(int currentValue);
     void addEnumeratedValue(QString name, int value);
+    void addRule(AttributeRule* rule);
 
 
 private:
@@ -36,7 +40,9 @@ private:
     PopupTypeEnum m_popupType;
     int m_defaultValue;
     int m_currentValue;
-    QHash<QString, int> m_enumeratedValue;
+    QMap<QString, int> m_enumeratedValue;
+    bool m_isValueSet;
+    QVector<AttributeRule*> m_rules;
 };
 
 #endif // ATTRIBUTE_H

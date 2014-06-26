@@ -37,7 +37,10 @@ SOURCES += main.cpp\
     pinrulepopup.cpp \
     regularbusconnectionrule.cpp \
     automaticbusconnectionrule.cpp \
-    automaticbusconnectionrulecomponent.cpp
+    automaticbusconnectionrulecomponent.cpp \
+    popupnumericvalue.cpp \
+    attributerule.cpp \
+    popupenumeratedvalue.cpp
 
 HEADERS  += schemeeditormainwindow.h \
     libraryfile.h \
@@ -64,9 +67,14 @@ HEADERS  += schemeeditormainwindow.h \
     pinrulepopup.h \
     regularbusconnectionrule.h \
     automaticbusconnectionrule.h \
-    automaticbusconnectionrulecomponent.h
+    automaticbusconnectionrulecomponent.h \
+    popupnumericvalue.h \
+    attributerule.h \
+    popupenumeratedvalue.h
 
-FORMS    += schemeeditormainwindow.ui
+FORMS    += schemeeditormainwindow.ui \
+    popupnumericvalue.ui \
+    popupenumeratedvalue.ui
 
 RESOURCES += \
     images.qrc
