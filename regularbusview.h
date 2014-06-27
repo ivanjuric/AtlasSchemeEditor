@@ -4,6 +4,8 @@
 #include "qgraphicsitem.h"
 #include "qcolor.h"
 
+#include <QLabel>
+
 #ifndef REGULARBUSVIEW_H
 #define REGULARBUSVIEW_H
 
@@ -14,7 +16,7 @@ class RegularBusView : public QGraphicsItem
 {
 public:
     // Constructor
-    RegularBusView(RegularBus *model, QPoint pos);
+    RegularBusView(RegularBus *model);
 
     // Getters
     int x() { return m_x; }
@@ -34,6 +36,7 @@ public:
     QString instanceName() { return m_instanceName; }
     QString id() { return m_id; }
     QVector<BusLine*> busLines() { return m_busLines; }
+    QGraphicsTextItem* label() { return m_label; }
 
     // Setters
     void setX(int x) { m_x = x; }
@@ -59,6 +62,7 @@ public:
     enum { Type = QGraphicsItem::UserType + 5 };
 
     void setLabel();
+    QRectF boundingRect() const;
 
 private:
     int m_x;
@@ -83,7 +87,7 @@ private:
     QGraphicsTextItem *m_label;
     void updateLabelPosition();
 
-    QRectF boundingRect() const;
+
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *item, QWidget *widget);
     void fillBusPins();
     PinView *createPinForBus(int uid, QColor color, int x, int y, int width, int height);

@@ -15,7 +15,7 @@
 class ComponentView : public QGraphicsItem
 {
 public:
-    ComponentView(ComponentModel *model, QPoint pos);
+    ComponentView(ComponentModel *model);
 
     // Getters
     QString id() { return m_id; }

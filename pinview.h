@@ -15,6 +15,7 @@ class RegularBusView;
 class PinView : public QGraphicsItem
 {
 public:
+    PinView();
     PinView(PinModel *model);
 
     // Getters

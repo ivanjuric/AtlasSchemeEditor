@@ -7,6 +7,9 @@
 #include <QPen>
 #include <QPainter>
 
+PinView::PinView()
+{
+}
 
 PinView::PinView(PinModel *model)
 {
@@ -202,17 +205,18 @@ QPointF* PinView::getStartPosition()
     }
     else
     {
-        point->setX(this->parentItem()->pos().x() + x());
-        point->setY(this->parentItem()->pos().y() + y());
+        QPoint p = this->parentBus()->pos().toPoint();
+        point->setX(p.x() + x());
+        point->setY(p.y() + y());
     }
 
     return point;
 }
 void PinView::setStartPosition()
 {
-    QPointF *point = getStartPosition();
-    setX(point->x());
-    setY(point->y());
+    QPoint point = getStartPosition()->toPoint();
+    setX(point.x());
+    setY(point.y());
 }
 
 QPointF PinView::centerPos(PinView *pin)

@@ -12,7 +12,7 @@
 #include <QMenu>
 #include <QContextMenuEvent>
 
-ComponentView::ComponentView(ComponentModel *model, QPoint pos)
+ComponentView::ComponentView(ComponentModel *model)
 {
     // Set properties from model
     setId(model->id());

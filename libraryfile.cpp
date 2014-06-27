@@ -15,12 +15,9 @@
 // Represents initial library file that contains all informations
 // needed to prepare main screen and whole system to work with
 // specified computer system.
-LibraryFile::LibraryFile(QString filepath)
+LibraryFile::LibraryFile()
 {
-    if(loadJson(filepath))
-        this->filePath = filepath;
-    else
-        this->filePath = "";
+    libraryDirPath = QDir::currentPath() + "/library";
 }
 
 // Loads JSON from file and parses it and assigns to LibraryFile class properties
@@ -31,8 +28,40 @@ bool LibraryFile::loadJson(QString filepath)
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
         return false;
 
+    // Copy library file to root directory
+    QDir rootDir(libraryDirPath);
+    if(!rootDir.exists())
+        rootDir.mkdir(libraryDirPath);
+
+    QFileInfo loadedInfo(file);
+    QFileInfo info(libraryDirPath, loadedInfo.fileName());
+    if(info.exists())
+    {
+        QFile newFile(info.absoluteFilePath());
+        if(newFile.remove())
+        {
+            //QString s = file.readAll();
+            file.copy(loadedInfo.absoluteFilePath(), info.absoluteFilePath());
+
+        }
+//            file.open(QIODevice::ReadWrite);
+//            QTextStream out(&file);
+//            out << newFile.readAll();
+//            newFile.close();
+
+    }
+    else
+    {
+        file.copy(loadedInfo.absoluteFilePath(), info.absoluteFilePath());
+    }
+
+    QFile libFile(info.absoluteFilePath());
     // Parse json file
-    QString data = file.readAll();
+    if(!libFile.open(QIODevice::ReadOnly | QIODevice::Text))
+        return false;
+
+    libraryFileName = info.fileName();
+    QString data = libFile.readAll();
     QJsonDocument doc(QJsonDocument::fromJson(data.toUtf8()));
 
     // Get JSON root object

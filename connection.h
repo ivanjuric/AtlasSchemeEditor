@@ -22,12 +22,15 @@ public:
 
     void updatePosFromPins();
     void updatePath();
+
+    QPointF pos1() { return m_pos1; }
+    QPointF pos2() { return m_pos2; }
     PinView* pin1() const;
     PinView* pin2() const;
     AutomaticBus* automaticBus() { return m_automaticBus; }
 private:
-    QPointF pos1;
-    QPointF pos2;
+    QPointF m_pos1;
+    QPointF m_pos2;
     PinView *m_pin1;
     PinView *m_pin2;
     AutomaticBus *m_automaticBus;

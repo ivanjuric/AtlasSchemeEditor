@@ -26,11 +26,11 @@ Connection::~Connection()
 
 void Connection::setPos1(const QPointF &p)
 {
-    pos1 = p;
+    m_pos1 = p;
 }
 void Connection::setPos2(const QPointF &p)
 {
-    pos2 = p;
+    m_pos2 = p;
 }
 
 void Connection::setPin1(PinView *p)
@@ -46,8 +46,8 @@ void Connection::setPin2(PinView *p)
 
 void Connection::updatePosFromPins()
 {
-    pos1 = m_pin1->scenePos();
-    pos2 = m_pin2->scenePos();
+    m_pos1 = m_pin1->scenePos();
+    m_pos2 = m_pin2->scenePos();
 }
 
 void Connection::updatePath()
@@ -55,21 +55,21 @@ void Connection::updatePath()
     QPainterPath p;
 
     if(pin1())
-        pos1 = pin1()->centerPos(pin1());
+        m_pos1 = pin1()->centerPos(pin1());
     if(pin2())
-        pos2 = pin2()->centerPos(pin2());
+        m_pos2 = pin2()->centerPos(pin2());
 
-    p.moveTo(pos1);
+    p.moveTo(m_pos1);
 
-    qreal dx = pos2.x() - pos1.x();
-    qreal dy = pos2.y() - pos1.y();
+    qreal dx = m_pos2.x() - m_pos1.x();
+    qreal dy = m_pos2.y() - m_pos1.y();
 
-    QPointF ctr1(pos1.x() + dx * 0.25, pos1.y() + dy * 0.1);
-    QPointF ctr2(pos1.x() + dx * 0.75, pos1.y() + dy * 0.9);
+    QPointF ctr1(m_pos1.x() + dx * 0.25, m_pos1.y() + dy * 0.1);
+    QPointF ctr2(m_pos1.x() + dx * 0.75, m_pos1.y() + dy * 0.9);
 
     ctr1.setX(ctr1.x() + 10);
     ctr2.setX(ctr2.x() + 10);
-    p.cubicTo(ctr1, ctr2, pos2);
+    p.cubicTo(ctr1, ctr2, m_pos2);
 
     setPath(p);
 }

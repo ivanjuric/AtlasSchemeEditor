@@ -29,7 +29,8 @@ SchemeEditorMainWindow::SchemeEditorMainWindow(QWidget *parent) :
 
     //temp
     QString filePath = "C:\\Users\\Ivan\\Desktop\\FRISC_LIBRARY_SIMPLE.json";
-    library = new LibraryFile(filePath);
+    library = new LibraryFile();
+    library->loadJson(filePath);
     fillToolbar();
 
     createContextMenus();
@@ -65,10 +66,9 @@ void SchemeEditorMainWindow::selectLibrary()
 {
     QString fileName = QFileDialog::getOpenFileName(this,tr("Open config file"),"",tr("Config JSON file (*.json)"));
 
-    LibraryFile *lib = new LibraryFile(fileName);
-    if(lib->filePath != "")
+    library = new LibraryFile();
+    if(library->loadJson(fileName))
     {
-        library = lib;
         clearSceneView();
         ui->toolBar->clear();
         fillToolbar();
@@ -87,10 +87,9 @@ void SchemeEditorMainWindow::AddComponentToScene(QString id)
         return;
 
     // Create new component and rewrite importnant properties
-    ComponentView *c = new ComponentView(model, QPoint(0,0));
+    ComponentView *c = new ComponentView(model);
     int instanceNameIndex = findComponentNameIndex(c->instanceNameBase());
     QString instanceName = createUniqueInstanceName(c->instanceNameBase(), instanceNameIndex);
-    //c->setUniqueInstanceName(instanceNameIndex);
     c->setInstanceName(instanceName);
     c->setParentToPins();
     foreach(PinView *pin, c->pins())
@@ -101,9 +100,6 @@ void SchemeEditorMainWindow::AddComponentToScene(QString id)
         pin->setParentItem(c);
     }
     c->setMirrored(false);
-
-//    mirrorComponentSignalMapper->setMapping(actionMirrorComponent, c->instanceName());
-//    deleteItemSignalMapper->setMapping(actionDeleteItem, c->instanceName());
     
     foreach(Attribute *attr, c->attributes())
     {
@@ -111,9 +107,35 @@ void SchemeEditorMainWindow::AddComponentToScene(QString id)
             continue;
         showEditAttribute(attr);
     }
-
+    c->setPos(QPointF(0,0));
     scene->addItem(c);
 }
+
+ComponentView* SchemeEditorMainWindow::createComponentViewFromFile(QString id, bool mirrored, QString instanceName, QPointF pos, QMap<QString,int> attributes)
+{
+    ComponentModel *model = library->getComponentById(id);
+    ComponentView *c = new ComponentView(model);
+    c->setInstanceName(instanceName);
+    c->setParentToPins();
+    foreach(PinView *pin, c->pins())
+    {
+        pin->setStartPosition();
+        pin->setFlag(QGraphicsItem::ItemIsMovable,false);
+        pin->setLabel();
+        pin->setParentItem(c);
+    }
+    c->setMirrored(mirrored);
+    if(c->mirrored())
+        c->mirrorSides();
+
+    foreach(Attribute *a, c->attributes())
+    {
+        a->setCurrentValue(attributes[a->id()]);
+    }
+    c->setPos(pos);
+    return c;
+}
+
 void SchemeEditorMainWindow::showEditAttribute(Attribute *attribute)
 {
     if(attribute->enumeratedValue().count() > 0)
@@ -145,7 +167,7 @@ void SchemeEditorMainWindow::AddBusToScene(QString id)
         return;
 
     // Create new component and rewrite importnant properties
-    RegularBusView *b = new RegularBusView((RegularBus*)bus, QPoint(0,0));
+    RegularBusView *b = new RegularBusView((RegularBus*)bus);
 
     int instanceNameIndex = findBusNameIndex(b->id());
     QString instanceName = createUniqueInstanceName(b->id(), instanceNameIndex);
@@ -156,10 +178,104 @@ void SchemeEditorMainWindow::AddBusToScene(QString id)
         pin->setStartPosition();
         pin->setFlag(QGraphicsItem::ItemIsMovable,false);
         pin->setParentItem(b);
+        pin->setParentInstanceName(b->instanceName());
     }
     b->setLabel();
+    b->setPos(QPointF(0,0));
     scene->addItem(b);
 }
+RegularBusView* SchemeEditorMainWindow::createRegularBusViewFromFile(QString id, QPointF pos, QString instanceName)
+{
+    Bus *bus = library->GetBusByUniqueId(id);
+    RegularBusView *b = new RegularBusView((RegularBus*)bus);
+    b->setInstanceName(instanceName);
+
+    foreach(PinView *pin, b->busPins())
+    {
+        pin->setStartPosition();
+        pin->setFlag(QGraphicsItem::ItemIsMovable,false);
+        pin->setParentItem(b);
+    }
+    b->setLabel();
+
+    b->setPos(pos);
+    return b;
+}
+Connection* SchemeEditorMainWindow::createConnectionFromFile(QString parentName1,QString pin1,QPointF pos1,QString parentName2,QString pin2,QPointF pos2, AutomaticBus *automaticBus)
+{
+    ComponentView *c1 = 0, *c2 = 0;
+    RegularBusView *b = 0;
+    PinView *p1 = 0, *p2 = 0;
+
+    // Find first pin and its component parent
+    foreach(ComponentView *comp, getComponentsFromScene())
+    {
+        if(comp->instanceName() == parentName1)
+        {
+            foreach (PinView *pin, comp->pins())
+            {
+                if(pin->id() == pin1)
+                {
+                    c1 = comp;
+                    p1 = pin;
+                    break;
+                }
+            }
+            break;
+        }
+    }
+    // Find second pin and its parent - bus or component
+    if(automaticBus)
+    {
+        foreach(ComponentView *comp, getComponentsFromScene())
+        {
+            if(comp->instanceName() == parentName2)
+            {
+                foreach (PinView *pin, comp->pins())
+                {
+                    if(pin->id() == pin2)
+                    {
+                        c2 = comp;
+                        p2 = pin;
+                        break;
+                    }
+                }
+                break;
+            }
+        }
+    }
+    else
+    {
+        foreach (RegularBusView *bus, getRegularBusesFromScene())
+        {
+            if(bus->instanceName() == parentName2)
+            {
+                foreach (PinView *pin, bus->busPins())
+                {
+                    if(pin->id() == pin2)
+                    {
+                        b = bus;
+                        p2 = pin;
+                        break;
+                    }
+
+                }
+                break;
+            }
+        }
+    }
+
+    Connection *c = new Connection(0);
+    c->setPin1(p1);
+    c->setPos1(p1->centerPos(p1));
+    c->setPin2(p2);
+    c->setPos2(p2->centerPos(p2));
+    if(automaticBus)
+        c->setAutomaticBus(automaticBus);
+    c->updatePath();
+    return c;
+}
+
 void SchemeEditorMainWindow::fillToolbar()
 {
     foreach (ComponentModel *c, library->componentList)
@@ -198,6 +314,11 @@ void SchemeEditorMainWindow::clearSceneView()
 {
     clearConnections();
     scene->clear();
+
+    scene = new QGraphicsScene();
+    scene->installEventFilter(this);
+    ui->graphicsView->setScene(scene);
+
     ui->graphicsView->viewport()->update();
 }
 void SchemeEditorMainWindow::clearConnections()
@@ -217,7 +338,7 @@ void SchemeEditorMainWindow::clearScene()
 
 void SchemeEditorMainWindow::saveSceneToFile()
 {
-    QString fname = QFileDialog::getSaveFileName();
+    QString fname = QFileDialog::getSaveFileName(this,tr("Save scene to file"),"",tr("Binary configuration (*.cfg)"));
     if (fname.isEmpty())
         return;
 
@@ -228,7 +349,7 @@ void SchemeEditorMainWindow::saveSceneToFile()
 }
 void SchemeEditorMainWindow::loadSceneFromFile()
 {
-    QString fname = QFileDialog::getOpenFileName();
+    QString fname = QFileDialog::getOpenFileName(this,tr("Load scene from file"),"",tr("Binary configuration (*.cfg)"));
     if (fname.isEmpty())
         return;
 
@@ -239,39 +360,147 @@ void SchemeEditorMainWindow::loadSceneFromFile()
 }
 void SchemeEditorMainWindow::save(QDataStream &ds)
 {
-//    ds << library->filePath;
-//    // Save all components and its pin children
-//    foreach(QGraphicsItem *item, scene->items())
-//    {
-//        if (item->type() == ComponentView::Type)
-//        {
-//            ds << item->type();
-//            ((ComponentView*) item)->save(ds);
-//        }
-//    }
+    // Save current library filename (file location is "/library")
+    ds << library->libraryFileName;
+
+    // Save components from scene
+    QVector<ComponentView*> components = getComponentsFromScene();
+    ds << components.length();
+    foreach (ComponentView *c, components)
+    {
+        ds << c->id();
+        ds << c->instanceName();
+        ds << c->pos();
+        ds << c->mirrored();
+        ds << c->attributes().length();
+        foreach(Attribute *a, c->attributes())
+        {
+            ds << a->id();
+            ds << a->currentValue();
+        }
+    }
+    // Save buses from scene
+    QVector<RegularBusView*> buses = getRegularBusesFromScene();
+    ds << buses.length();
+    foreach (RegularBusView *b, buses)
+    {
+        ds << b->id();
+        ds << b->instanceName();
+        ds << b->pos();
+    }
+
+    // Save connections from scene
+    QVector<Connection*> connections = getConnectionsFromScene();
+    ds << connections.length();
+    foreach(Connection *c, connections)
+    {
+        if(c->automaticBus())
+        {
+            ds << 1;
+            ds << c->automaticBus()->id();
+            ds << c->automaticBus()->instanceName();
+        }
+        else
+        {
+            ds << 0;
+        }
+        ds << c->pin1()->parentInstanceName();
+        ds << c->pin1()->id();
+        ds << c->pos1();
+        ds << c->pin2()->parentInstanceName();
+        ds << c->pin2()->id();
+        ds << c->pos2();
+    }
 }
 void SchemeEditorMainWindow::load(QDataStream &ds)
 {
-//    scene->clear();
-//    QMap<quint64, PinView*> pinMap;
+    scene->clear();
 
-//    QString libraryFilePath;
-//    ds >> libraryFilePath;
+    // Load library used in saved configuration
+    QString libraryFileName;
+    ds >> libraryFileName;
+    QFileInfo info(QDir::toNativeSeparators(QDir::currentPath() + "/library"), libraryFileName);
 
-//    library = new LibraryFile(libraryFilePath);
+    library = new LibraryFile();
+    library->loadJson(info.absoluteFilePath());
 
-//    while (!ds.atEnd())
-//    {
-//        int type;
-//        ds >> type;
-//        if (type == ComponentView::Type)
-//        {
-//            ComponentModel *c = new ComponentModel();
-//            ComponentView *component = new ComponentView(model, QPoint(0,0));
-//            scene->addItem(component);
-//            component->load(ds, pinMap);
-//        }
-//    }
+
+    // Load components
+    int componentNumber;
+    ds >> componentNumber;
+    for(int i=0; i < componentNumber; i++)
+    {
+        QString id;
+        ds >> id;
+        QString instanceName;
+        ds >> instanceName;
+        QPointF pos;
+        ds >> pos;
+        bool mirrored;
+        ds >> mirrored;
+        int attrNum;
+        ds >> attrNum;
+        QMap<QString,int> attributes;
+        for(int i = 0; i < attrNum; i++)
+        {
+            QString attrId;
+            ds >> attrId;
+            int attrVal;
+            ds >> attrVal;
+            attributes[attrId] = attrVal;
+        }
+        ComponentView *c = createComponentViewFromFile(id,mirrored,instanceName,pos,attributes);
+        scene->addItem(c);
+    }
+
+    // Load buses
+    int busNumber;
+    ds >> busNumber;
+    for(int i=0; i < busNumber; i++)
+    {
+        QString id;
+        ds >> id;
+        QString instanceName;
+        ds >> instanceName;
+        QPointF pos;
+        ds >> pos;
+        RegularBusView *b = createRegularBusViewFromFile(id,pos,instanceName);
+        scene->addItem(b);
+    }
+
+    // Load connections and automatic buses
+    int connectionNumber;
+    ds >> connectionNumber;
+    for(int i=0; i < connectionNumber; i++)
+    {
+        int type;
+        ds >> type;
+        AutomaticBus *a = 0;
+        if(type == 1)
+        {
+            QString autoId;
+            ds >> autoId;
+            QString autoInstanceName;
+            ds >> autoInstanceName;
+
+            a = new AutomaticBus();
+            a->setId(autoId);
+            a->setInstanceName(autoInstanceName);
+        }
+        QString id1,id2,instanceName1,instanceName2;
+        QPointF pos1,pos2;
+
+        ds >> instanceName1;
+        ds >> id1;
+        ds >> pos1;
+        ds >> instanceName2;
+        ds >> id2;
+        ds >> pos2;
+
+        Connection *c = createConnectionFromFile(instanceName1,id1,pos1,instanceName2,id2,pos2,a);
+        scene->addItem(c);
+    }
+    //scene->update();
 }
 
 // Podesavanje menija i toolbara
@@ -816,6 +1045,30 @@ QVector<AutomaticBus*> SchemeEditorMainWindow::getAutomaticBusesFromScene()
     }
 
     return automaticBuses;
+}
+QVector<ComponentView*> SchemeEditorMainWindow::getComponentsFromScene()
+{
+    QVector<ComponentView*> components;
+
+    for(int i = 0; i < scene->items().length(); i++)
+    {
+        ComponentView *c = dynamic_cast<ComponentView*>(scene->items()[i]);
+        if(c)
+            components.append(c);
+    }
+    return components;
+}
+QVector<RegularBusView*> SchemeEditorMainWindow::getRegularBusesFromScene()
+{
+    QVector<RegularBusView*> buses;
+
+    for(int i = 0; i < scene->items().length(); i++)
+    {
+        RegularBusView *c = dynamic_cast<RegularBusView*>(scene->items()[i]);
+        if(c)
+            buses.append(c);
+    }
+    return buses;
 }
 
 

@@ -8,10 +8,10 @@
 #include <QPainter>
 #include <QPoint>
 
-RegularBusView::RegularBusView(RegularBus *model, QPoint pos)
+RegularBusView::RegularBusView(RegularBus *model)
 {
-    setX(pos.x());
-    setY(pos.y());
+    setX(0);
+    setY(0);
     setIconFile(model->iconFile());
     setTitle(model->title());
     setTooltip(model->tooltip());
@@ -29,6 +29,7 @@ RegularBusView::RegularBusView(RegularBus *model, QPoint pos)
         addBusLine(busLine);
     }
     m_label = new QGraphicsTextItem(this);
+    setLabel();
     fillBusPins();
     setZValue(-1);
     setFlags(ItemIsSelectable | ItemIsMovable);
@@ -73,6 +74,7 @@ PinView *RegularBusView::createPinForBus(int uid, QColor color, int x, int y, in
 {
     PinModel *model = new PinModel(uid);
     model->setLineColor(color);
+    //QPoint p = pos().toPoint();
     model->setX(x);
     model->setY(y);
     model->setWidth(width);

@@ -19,13 +19,13 @@
 class LibraryFile
 {
 public:
-    LibraryFile(QString filepath);
+    LibraryFile();
 
     Bus *GetBusByUniqueId(QString id);
 
 
     // Properties
-    QString filePath;
+    QString libraryFileName;
     QString libraryTitle;
     QString libraryInfo;
     QVector<QString> comdelHeader;
@@ -42,10 +42,13 @@ public:
     ComponentModel *getComponentById(QString id);
     AutomaticBus* getAutomaticBusById(QString id);
 
+    bool loadJson(QString filepath);
+
 private:
     int randId;
+    QString libraryDirPath;
 
-    bool loadJson(QString filepath);
+
     void loadComdelHeader(QJsonArray headerLines);
     void loadAddressSpaceList(QJsonArray addressSpaces);
     void loadMessages(QJsonObject messagesObj);

@@ -10,7 +10,7 @@ class AutomaticBus : public Bus
 public:
     AutomaticBus();
 
-    QString instanceName() { m_instanceName; }
+    QString instanceName() { return m_instanceName; }
     void setInstanceName(QString instanceName) { m_instanceName = instanceName; }
 
 private:

@@ -118,11 +118,17 @@ private:
 
     QVector<Connection*> getConnectionsFromScene();
     QVector<AutomaticBus*> getAutomaticBusesFromScene();
+    QVector<ComponentView*> getComponentsFromScene();
+    QVector<RegularBusView*> getRegularBusesFromScene();
+
 
     QPixmap getIconPixmap(QString path);
 
     void showEditAttribute(Attribute *attribute);
 
+    ComponentView* createComponentViewFromFile(QString id, bool mirrored, QString instanceName, QPointF pos, QMap<QString,int> attributes);
+    RegularBusView* createRegularBusViewFromFile(QString id, QPointF pos, QString instanceName);
+    Connection* createConnectionFromFile(QString parentName1,QString pin1,QPointF pos1,QString parentName2,QString pin2,QPointF pos2, AutomaticBus *automaticBus);
 
 protected:
     void contextMenuEvent(QContextMenuEvent *event);
