@@ -128,7 +128,7 @@ private:
 
     ComponentView* createComponentViewFromFile(QString id, bool mirrored, QString instanceName, QPointF pos, QMap<QString,int> attributes);
     RegularBusView* createRegularBusViewFromFile(QString id, QPointF pos, QString instanceName);
-    Connection* createConnectionFromFile(QString parentName1,QString pin1,QPointF pos1,QString parentName2,QString pin2,QPointF pos2, AutomaticBus *automaticBus);
+    Connection* createConnectionFromFile(QString parentName1,QString pin1,QString parentName2,QString pin2,AutomaticBus *automaticBus);
 
 protected:
     void contextMenuEvent(QContextMenuEvent *event);

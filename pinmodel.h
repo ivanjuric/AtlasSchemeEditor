@@ -10,10 +10,9 @@ class PinModel
 {
 public:
     // Constructor
-    PinModel(int uid);
+    PinModel();
 
     // Getters
-    int uid() { return m_uid; }
     QString id() { return m_id; }
     QString title() { return m_title; }
     QString tooltip() { return m_tooltip; }
@@ -29,7 +28,6 @@ public:
     QColor fillColorConnected() { return m_fillColorConnected; }
 
     // Setters
-    void setUid(int uid) { m_uid = uid; }
     void setId(QString id) { m_id = id; }
     void setTitle(QString title) { m_title = title; }
     void setTooltip(QString tooltip) { m_tooltip = tooltip; }
@@ -46,7 +44,6 @@ public:
 
 
 private:
-    int m_uid;
     QString m_id;
     QString m_title;
     QString m_tooltip;

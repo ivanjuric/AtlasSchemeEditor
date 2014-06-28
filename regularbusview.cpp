@@ -22,7 +22,6 @@ RegularBusView::RegularBusView(RegularBus *model)
     setLineThickness(model->lineThickness());
     setOrientation(model->orientation());
 
-    //setUid(model->uid());
     setId(model->id());
     foreach (BusLine *busLine, model->busLines())
     {
@@ -42,17 +41,18 @@ void RegularBusView::fillBusPins()
     int remainingPinLength = lineLength() - lineThickness() * numberOfPins;
     QColor color = Qt::yellow;
     int a = lineThickness();
+    QString finalPinId = QString::number(busPins().length());
 
     if(orientation() == OrientationEnum::Horizontal)
     {
         for(int i = 0; i < numberOfPins;i++)
         {
-            PinView *pin = createPinForBus(i, color, a * i, 0, a, a);
+            PinView *pin = createPinForBus(QString::number(i), color, a * i, 0, a, a);
             addBusPin(pin);
         }
         if(remainingPinLength > 0)
         {
-            PinView *pin = createPinForBus(busPins().length(), color, lineLength() - remainingPinLength, 0, remainingPinLength, a);
+            PinView *pin = createPinForBus(finalPinId, color, lineLength() - remainingPinLength, 0, remainingPinLength, a);
             addBusPin(pin);
         }
     }
@@ -60,21 +60,21 @@ void RegularBusView::fillBusPins()
     {
         for(int i = 0; i < numberOfPins;i++)
         {
-            PinView *pin = createPinForBus(i, color, 0, a * i, a, a);
+            PinView *pin = createPinForBus(QString::number(i), color, 0, a * i, a, a);
             addBusPin(pin);
         }
         if(remainingPinLength > 0)
         {
-            PinView *pin = createPinForBus(busPins().length(),color, 0, lineLength() - remainingPinLength, a, remainingPinLength);
+            PinView *pin = createPinForBus(finalPinId,color, 0, lineLength() - remainingPinLength, a, remainingPinLength);
             addBusPin(pin);
         }
     }
 }
-PinView *RegularBusView::createPinForBus(int uid, QColor color, int x, int y, int width, int height)
+PinView *RegularBusView::createPinForBus(QString id, QColor color, int x, int y, int width, int height)
 {
-    PinModel *model = new PinModel(uid);
+    PinModel *model = new PinModel();
+    model->setId(id);
     model->setLineColor(color);
-    //QPoint p = pos().toPoint();
     model->setX(x);
     model->setY(y);
     model->setWidth(width);

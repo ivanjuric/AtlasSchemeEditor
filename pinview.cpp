@@ -13,7 +13,6 @@ PinView::PinView()
 
 PinView::PinView(PinModel *model)
 {
-    setUid(model->uid());
     setId(model->id());
     setTitle(model->title());
     setTooltip(model->tooltip());
@@ -184,8 +183,13 @@ QVariant PinView::itemChange(GraphicsItemChange change, const QVariant &value)
 bool PinView::isConnected()
 {
     foreach(Connection *conn, connections)
-        if (conn->pin1() == this && conn->pin2() != 0)
+    {
+        PinView *p1 = conn->pin1();
+        PinView *p2 = conn->pin2();
+        if((p1 && p1->parentInstanceName() == this->parentInstanceName() && p1->id() == this->id() && p2 != 0)
+          || (p2 && p2->parentInstanceName() == this->parentInstanceName() && p2->id() == this->id() && p2 != 0))
             return true;
+    }
 
     return false;
 }

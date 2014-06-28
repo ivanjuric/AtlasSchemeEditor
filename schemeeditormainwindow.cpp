@@ -195,13 +195,14 @@ RegularBusView* SchemeEditorMainWindow::createRegularBusViewFromFile(QString id,
         pin->setStartPosition();
         pin->setFlag(QGraphicsItem::ItemIsMovable,false);
         pin->setParentItem(b);
+        pin->setParentInstanceName(b->instanceName());
     }
     b->setLabel();
 
     b->setPos(pos);
     return b;
 }
-Connection* SchemeEditorMainWindow::createConnectionFromFile(QString parentName1,QString pin1,QPointF pos1,QString parentName2,QString pin2,QPointF pos2, AutomaticBus *automaticBus)
+Connection* SchemeEditorMainWindow::createConnectionFromFile(QString parentName1,QString pin1,QString parentName2,QString pin2,AutomaticBus *automaticBus)
 {
     ComponentView *c1 = 0, *c2 = 0;
     RegularBusView *b = 0;
@@ -406,10 +407,8 @@ void SchemeEditorMainWindow::save(QDataStream &ds)
         }
         ds << c->pin1()->parentInstanceName();
         ds << c->pin1()->id();
-        ds << c->pos1();
         ds << c->pin2()->parentInstanceName();
         ds << c->pin2()->id();
-        ds << c->pos2();
     }
 }
 void SchemeEditorMainWindow::load(QDataStream &ds)
@@ -488,19 +487,15 @@ void SchemeEditorMainWindow::load(QDataStream &ds)
             a->setInstanceName(autoInstanceName);
         }
         QString id1,id2,instanceName1,instanceName2;
-        QPointF pos1,pos2;
 
         ds >> instanceName1;
         ds >> id1;
-        ds >> pos1;
         ds >> instanceName2;
         ds >> id2;
-        ds >> pos2;
 
-        Connection *c = createConnectionFromFile(instanceName1,id1,pos1,instanceName2,id2,pos2,a);
+        Connection *c = createConnectionFromFile(instanceName1,id1,instanceName2,id2,a);
         scene->addItem(c);
     }
-    //scene->update();
 }
 
 // Podesavanje menija i toolbara
@@ -1002,7 +997,7 @@ bool SchemeEditorMainWindow::isConnectionFromPin(Connection *connection, QString
     QString pin1Name;
     QString pin2Name;
 
-    if(connection && connection->pin1() && connection->pin2() && connection->pin1()->parentComponent() && connection->pin2()->parentComponent())
+    if(connection && connection->pin1() && connection->pin2() && connection->pin1()->parentComponent() && (connection->pin2()->parentComponent() || connection->pin2()->parentBus()))
     {
         pin1Name = connection->pin1()->parentInstanceName();
         pin2Name = connection->pin2()->parentInstanceName();

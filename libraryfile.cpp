@@ -192,7 +192,6 @@ void LibraryFile::loadComponentViews(QJsonArray views, ComponentModel *component
 }
 void LibraryFile::loadComponentPins(QJsonArray pins, ComponentModel *component)
 {
-    int uid = 0;
     foreach (QJsonValue pinVal, pins)
     {
         QJsonObject pinObject = pinVal.toObject();
@@ -200,7 +199,7 @@ void LibraryFile::loadComponentPins(QJsonArray pins, ComponentModel *component)
         QJsonObject pinViewObject = pinObject["view"].toObject();
 
         // Load PinModel properties
-        PinModel *pin = new PinModel(uid++);
+        PinModel *pin = new PinModel();
         pin->setId(pinObject["ID"].toString());
         pin->setTitle(pinObject["title"].toString());
         pin->setTooltip(pinObject["tooltip"].toString());
@@ -292,7 +291,6 @@ void LibraryFile::loadBuses(QJsonArray busList, bool regularBusType)
             bus = new AutomaticBus();
 
         // Fill common properties for both bus types
-        //bus->setUid("uid");// set unique id
         bus->setId(busObject["ID"].toString());
         loadBusLines(busObject["busLines"].toArray(), bus);
 

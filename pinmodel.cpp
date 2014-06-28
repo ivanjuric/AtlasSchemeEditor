@@ -1,6 +1,5 @@
 #include "pinmodel.h"
 
-PinModel::PinModel(int uid)
+PinModel::PinModel()
 {
-    setUid(uid);
 }

@@ -52,7 +52,7 @@ public:
     void setLineColor(QColor lineColor) { m_lineColor = lineColor; }
     void setInstanceName(QString name) { m_instanceName = name; }
 
-    void setUid(QString uid) { m_instanceName = uid; }
+    //void setUid(QString uid) { m_instanceName = uid; }
     void setId(QString id) { m_id = id; }
 
     void addBusPin(PinView *pin);
@@ -90,6 +90,6 @@ private:
 
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *item, QWidget *widget);
     void fillBusPins();
-    PinView *createPinForBus(int uid, QColor color, int x, int y, int width, int height);
+    PinView *createPinForBus(QString id, QColor color, int x, int y, int width, int height);
 };
 #endif // REGULARBUSVIEW_H
