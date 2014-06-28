@@ -44,11 +44,6 @@ bool LibraryFile::loadJson(QString filepath)
             file.copy(loadedInfo.absoluteFilePath(), info.absoluteFilePath());
 
         }
-//            file.open(QIODevice::ReadWrite);
-//            QTextStream out(&file);
-//            out << newFile.readAll();
-//            newFile.close();
-
     }
     else
     {
@@ -157,7 +152,8 @@ void LibraryFile::loadComponents(QJsonArray compArray)
 }
 void LibraryFile::loadComponentViews(QJsonArray views, ComponentModel *component)
 {
-    foreach (QJsonValue viewVal, views) {
+    foreach (QJsonValue viewVal, views)
+    {
        QJsonObject viewObject = viewVal.toObject();
 
        // Determine view type
@@ -168,7 +164,8 @@ void LibraryFile::loadComponentViews(QJsonArray views, ComponentModel *component
        int y = viewObject["y"].toInt();
        QColor mainColor = getColor(viewObject["mainColor"].toString());
 
-       if(viewType == "rectangle"){
+       if(viewType == "rectangle")
+       {
            VisualRectangle *rectangle = new VisualRectangle(x,y,mainColor);
            rectangle->width = viewObject["width"].toInt();
            rectangle->height = viewObject["height"].toInt();
@@ -176,14 +173,16 @@ void LibraryFile::loadComponentViews(QJsonArray views, ComponentModel *component
            rectangle->fillColor = QColor::isValidColor(colorName) ? QColor(colorName) : QColor(Qt::white);
            component->addVisualElement(rectangle);
        }
-       else if(viewType == "circle"){
+       else if(viewType == "circle")
+       {
            VisualCircle *circle = new VisualCircle(x,y,mainColor);
            circle->radius = viewObject["radius"].toInt();
            QString colorName = viewObject["fillColor"].toString();
            circle->fillColor = QColor::isValidColor(colorName) ? QColor(colorName) : QColor(Qt::white);
            component->addVisualElement(circle);
        }
-       else if(viewType == "text"){
+       else if(viewType == "text")
+       {
            VisualText *text = new VisualText(x,y,mainColor);
            text->text = viewObject["string"].toString();
            component->addVisualElement(text);

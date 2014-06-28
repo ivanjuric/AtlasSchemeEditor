@@ -34,17 +34,14 @@ public:
 
     void save(QDataStream &ds);
     void load(QDataStream &ds);
-    int getNumberOfSameComponentsInScene(QString baseName);
     ComponentView *getComponentFromScene(QString instanceName);
     RegularBusView* getRegularBusFromScene(QString instanceName);
-    int findComponentNameIndex(QString baseName);
 
 
 public slots:
     void selectLibrary();
     void saveSceneToFile();
     void loadSceneFromFile();
-    void AddComponentToScene(QString id);
     void AddBusToScene(QString id);
     void mirror(QString instanceName);
     void deleteItem(QString instanceName);
@@ -64,10 +61,8 @@ signals:
 private:
     void createActions();
     bool isComponentInScene(int uid);
-    bool isSameBusInScene(QString id);
     QGraphicsItem *itemAt(const QPointF&);
 
-    QSignalMapper *componentsSignalMapper;
     QSignalMapper *busSignalMapper;
     QSignalMapper *contextMenuSignalMapper;
 
@@ -115,14 +110,11 @@ private:
     QGraphicsItem *activeItem;
     Connection *activeConnection;
 
-    QString createUniqueInstanceName(QString name, int num);
 
     bool isConnectionAllowed(PinView *pin1, PinView *pin2);
     bool checkRegularBusRule(PinView *pin1, PinView *pin2);
     QString checkAutomaticBusRule(PinView *pin1, PinView *pin2);
 
-    int getNumberOfSameBusesInScene(QString id);
-    int findBusNameIndex(QString id);
 
     QVector<Connection*> getConnectionsFromScene();
     QVector<AutomaticBus*> getAutomaticBusesFromScene();
@@ -132,20 +124,13 @@ private:
 
     QPixmap getIconPixmap(QString path);
 
-    void showEditAttribute(Attribute *attribute);
 
     ComponentView* createComponentViewFromFile(QString id, bool mirrored, QString instanceName, QPointF pos, QMap<QString,int> attributes);
     RegularBusView* createRegularBusViewFromFile(QString id, QPointF pos, QString instanceName);
     Connection* createConnectionFromFile(QString parentName1,QString pin1,QString parentName2,QString pin2,AutomaticBus *automaticBus);
 
-    ComponentView* createComponent(QString id, QPointF pos);
 protected:
     void contextMenuEvent(QContextMenuEvent *event);
-
-    virtual void dragEnterEvent(QDragEnterEvent *event);
-//    virtual void dragLeaveEvent(QDragLeaveEvent *event);
-//    virtual void dragMoveEvent(QDragMoveEvent *event);
-    virtual void dropEvent(QDropEvent *event);
 };
 
 #endif // SCHEMEEDITORMAINWINDOW_H

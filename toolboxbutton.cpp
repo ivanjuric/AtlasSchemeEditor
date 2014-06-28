@@ -3,7 +3,7 @@
 ToolboxButton::ToolboxButton(QWidget *parent) : QToolButton(parent)
 {
 }
-void ToolboxButton::mousePressEvent(QMouseEvent *e)
+void ToolboxButton::mousePressEvent(QMouseEvent *event)
 {
     pressed();
 }

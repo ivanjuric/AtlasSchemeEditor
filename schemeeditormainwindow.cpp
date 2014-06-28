@@ -33,6 +33,7 @@ SchemeEditorMainWindow::SchemeEditorMainWindow(QWidget *parent) :
     QString filePath = "C:\\Users\\Ivan\\Desktop\\FRISC_LIBRARY_SIMPLE.json";
     library = new LibraryFile();
     library->loadJson(filePath);
+    ui->graphicsView->setLibrary(library);
     fillToolbar();
 
     createContextMenus();
@@ -58,10 +59,6 @@ void SchemeEditorMainWindow::createContextMenus()
     // Add actions to context menu
     componentContextMenu->addAction(actionMirrorComponent);
     componentContextMenu->addAction(actionDeleteItem);
-
-
-//    contextMenuSignalMapper->setMapping(actionMirror,component->instanceName());
-//    connect(actionMirror, SIGNAL(triggered()), contextMenuSignalMapper, SLOT(map()));
 }
 
 void SchemeEditorMainWindow::selectLibrary()
@@ -71,19 +68,13 @@ void SchemeEditorMainWindow::selectLibrary()
     library = new LibraryFile();
     if(library->loadJson(fileName))
     {
+        ui->graphicsView->setLibrary(library);
         clearSceneView();
         ui->toolBar->clear();
         fillToolbar();
         this->setWindowTitle(library->libraryTitle);
     }
 }
-// Add selected component to graphics scene
-void SchemeEditorMainWindow::AddComponentToScene(QString id)
-{
-    ComponentView *c = createComponent(id, QPointF(0,0));
-    scene->addItem(c);
-}
-
 ComponentView* SchemeEditorMainWindow::createComponentViewFromFile(QString id, bool mirrored, QString instanceName, QPointF pos, QMap<QString,int> attributes)
 {
     ComponentModel *model = library->getComponentById(id);
@@ -108,77 +99,21 @@ ComponentView* SchemeEditorMainWindow::createComponentViewFromFile(QString id, b
     c->setPos(pos);
     return c;
 }
-ComponentView* SchemeEditorMainWindow::createComponent(QString id, QPointF pos)
-{
-    ComponentModel *model = library->getComponentById(id);
-    if(model == 0)
-        return 0;
 
-    int numberOfSameComponents = getNumberOfSameComponentsInScene(model->instanceNameBase());
-    if(model->maxInstances() != 0 && numberOfSameComponents >= model->maxInstances())
-        return 0;
 
-    // Create new component and rewrite importnant properties
-    ComponentView *c = new ComponentView(model);
-    int instanceNameIndex = findComponentNameIndex(c->instanceNameBase());
-    QString instanceName = createUniqueInstanceName(c->instanceNameBase(), instanceNameIndex);
-    c->setInstanceName(instanceName);
-    c->setParentToPins();
-    foreach(PinView *pin, c->pins())
-    {
-        pin->setStartPosition();
-        pin->setFlag(QGraphicsItem::ItemIsMovable,false);
-        pin->setLabel();
-        pin->setParentItem(c);
-    }
-    c->setMirrored(false);
-
-    foreach(Attribute *attr, c->attributes())
-    {
-        if(attr->popupType() != PopupTypeEnum::Automatic)
-            continue;
-        showEditAttribute(attr);
-    }
-    c->setPos(pos);
-
-    return c;
-}
-
-void SchemeEditorMainWindow::showEditAttribute(Attribute *attribute)
-{
-    if(attribute->enumeratedValue().count() > 0)
-    {
-        PopupEnumeratedValue *enumPopup = new PopupEnumeratedValue();
-        enumPopup->setScene(scene);
-        //enumPopup->setComponent(c);
-        enumPopup->setComponentAttribute(attribute);
-        enumPopup->fillValues(!attribute->isValueSet());
-        enumPopup->exec();
-    }
-    else
-    {
-        PopupNumericValue *valPopup = new PopupNumericValue();
-        //valPopup->setScene(scene);
-        //valPopup->setComponent(c);
-        valPopup->setComponentAttribute(attribute);
-        valPopup->fillValues(!attribute->isValueSet());
-
-        valPopup->exec();
-    }
-}
 
 // Add selected bus to graphics scene
 void SchemeEditorMainWindow::AddBusToScene(QString id)
 {
     Bus *bus = library->GetBusByUniqueId(id);
-    if(bus == 0 || isSameBusInScene(bus->id()))
+    if(bus == 0 || ui->graphicsView->isSameBusInScene(bus->id()))
         return;
 
     // Create new component and rewrite importnant properties
     RegularBusView *b = new RegularBusView((RegularBus*)bus);
 
-    int instanceNameIndex = findBusNameIndex(b->id());
-    QString instanceName = createUniqueInstanceName(b->id(), instanceNameIndex);
+    int instanceNameIndex = ui->graphicsView->findBusNameIndex(b->id());
+    QString instanceName = ui->graphicsView->createUniqueInstanceName(b->id(), instanceNameIndex);
     b->setInstanceName(instanceName);
 
     foreach(PinView *pin, b->busPins())
@@ -289,31 +224,38 @@ void SchemeEditorMainWindow::fillToolbar()
 {
     foreach (ComponentModel *c, library->componentList)
     {
-        QAction *actionAddFromToolbar = new QAction(this);
-        actionAddFromToolbar->setIcon(getIconPixmap(c->iconFile()));
-        actionAddFromToolbar->setIconText(c->id());
-        actionAddFromToolbar->setIconVisibleInMenu(true);
+        QAction *a = new QAction(this);
+        a->setIcon(getIconPixmap(c->iconFile()));
+        a->setIconText(c->id());
+        a->setIconVisibleInMenu(true);
         ToolboxButton *btn = new ToolboxButton();
-        btn->setDefaultAction(actionAddFromToolbar);
-
-        componentsSignalMapper->setMapping(actionAddFromToolbar,c->id());
-        connect(actionAddFromToolbar, SIGNAL(triggered()), componentsSignalMapper, SLOT(map()));
+        btn->setDefaultAction(a);
 
         dragAndDropComponentSignalMapper->setMapping(btn,c->id());
         connect(btn, SIGNAL(pressed()), dragAndDropComponentSignalMapper, SLOT(map()));
 
-        //ui->toolBar->addAction(actionAddFromToolbar);
         ui->toolBar->addWidget(btn);
     }
 
     ui->toolBar->addSeparator();
 
-    foreach(Bus *bus, library->regularBuses)
+    foreach(RegularBus *b, library->regularBuses)
     {
-        QAction *actionAddFromToolbar = new QAction(bus->id(),this);
-        busSignalMapper->setMapping(actionAddFromToolbar,bus->id());
-        connect(actionAddFromToolbar, SIGNAL(triggered()), busSignalMapper, SLOT(map()));
-        ui->toolBar->addAction(actionAddFromToolbar);
+        QAction *a = new QAction(this);
+        a->setIcon(getIconPixmap(b->iconFile()));
+        a->setIconText(b->id());
+        a->setIconVisibleInMenu(true);
+        ToolboxButton *btn = new ToolboxButton();
+        btn->setDefaultAction(a);
+
+//        busSignalMapper->setMapping(a,b->id());
+//        connect(a, SIGNAL(triggered()), busSignalMapper, SLOT(map()));
+
+        dragAndDropBusSignalMapper->setMapping(a, b->id());
+        connect(btn, SIGNAL(pressed()),dragAndDropBusSignalMapper, SLOT(map()));
+
+        ui->toolBar->addWidget(btn);
+        //ui->toolBar->addAction(a);
     }
 }
 QPixmap SchemeEditorMainWindow::getIconPixmap(QString iconFile)
@@ -438,6 +380,7 @@ void SchemeEditorMainWindow::load(QDataStream &ds)
 
     library = new LibraryFile();
     library->loadJson(info.absoluteFilePath());
+    ui->graphicsView->setLibrary(library);
 
 
     // Load components
@@ -517,9 +460,6 @@ void SchemeEditorMainWindow::load(QDataStream &ds)
 // Podesavanje menija i toolbara
 void SchemeEditorMainWindow::createActions()
 {
-    componentsSignalMapper = new QSignalMapper(this);
-    connect(componentsSignalMapper, SIGNAL(mapped(QString)),this,SLOT(AddComponentToScene(QString)));
-
     contextMenuSignalMapper = new QSignalMapper(this);
     connect(contextMenuSignalMapper, SIGNAL(mapped(QString)),this,SLOT(mirror(QString)));
     
@@ -585,16 +525,7 @@ bool SchemeEditorMainWindow::isComponentInScene(int uid)
     return false;
 }
 // Check if component is already attached to graphics scene
-bool SchemeEditorMainWindow::isSameBusInScene(QString id)
-{
-    QList<QGraphicsItem*> items = scene->items();
-    for(int i = 0; i < items.length(); i++){
-        RegularBusView *b = dynamic_cast<RegularBusView*>(items[i]);
-        if(b && b->id() == id)
-            return true;
-    }
-    return false;
-}
+
 
 SchemeEditorMainWindow::~SchemeEditorMainWindow()
 {
@@ -741,7 +672,7 @@ bool SchemeEditorMainWindow::eventFilter(QObject *o, QEvent *e)
                             {
                                 QVector<AutomaticBus*> ab = getAutomaticBusesFromScene();
                                 int num = ab.length() + 1;
-                                QString instanceName = createUniqueInstanceName(a->id(), num);
+                                QString instanceName = ui->graphicsView->createUniqueInstanceName(a->id(), num);
                                 a->setInstanceName(instanceName);
                                 conn->setAutomaticBus(a);
                                 conn->setPos2(pin2->centerPos((PinView*)item));
@@ -934,7 +865,7 @@ void SchemeEditorMainWindow::editAttributes(QString instanceName)
     {
         foreach(Attribute *attr, c->attributes())
         {
-            showEditAttribute(attr);
+            ui->graphicsView->showEditAttribute(attr);
         }
     }
 }
@@ -986,78 +917,6 @@ RegularBusView* SchemeEditorMainWindow::getRegularBusFromScene(QString instanceN
     }
     return 0;
 }
-
-int SchemeEditorMainWindow::getNumberOfSameComponentsInScene(QString baseName)
-{
-    QList<QGraphicsItem*> items = scene->items();
-
-    int total = 0;
-    for(int i = 0; i < items.length(); i++)
-    {
-        ComponentView *c = dynamic_cast<ComponentView*>(items[i]);
-        //ComponentView *c = (ComponentView*)items[i];
-        if(c && c->instanceNameBase().toLower() == baseName.toLower())
-            total++;
-    }
-    return total;
-}
-int SchemeEditorMainWindow::getNumberOfSameBusesInScene(QString id)
-{
-    QList<QGraphicsItem*> items = scene->items();
-
-    int total = 0;
-    for(int i = 0; i < items.length(); i++)
-    {
-        RegularBusView *b = dynamic_cast<RegularBusView*>(items[i]);
-        if(b && b->id().toLower() == id.toLower())
-            total++;
-    }
-    return total;
-}
-
-int SchemeEditorMainWindow::findComponentNameIndex(QString baseName)
-{
-    QList<QGraphicsItem*> items = scene->items();
-
-    int max = 0;
-    for(int i = 0; i < items.length(); i++)
-    {
-        ComponentView *c = dynamic_cast<ComponentView*>(items[i]);
-        if(c && c->instanceNameBase().toLower() == baseName.toLower())
-        {
-            QStringList splitArray = c->instanceName().split('_');
-            if(splitArray.length() == 2 && splitArray[1].toInt() > max)
-                max = splitArray[1].toInt();
-        }
-    }
-    int existingComponents = getNumberOfSameComponentsInScene(baseName);
-    if(existingComponents > max)
-        max = existingComponents;
-
-    return max + 1;
-}
-int SchemeEditorMainWindow::findBusNameIndex(QString id)
-{
-    QList<QGraphicsItem*> items = scene->items();
-
-    int max = 0;
-    for(int i = 0; i < items.length(); i++)
-    {
-        RegularBusView *b = dynamic_cast<RegularBusView*>(items[i]);
-        if(b && b->id().toLower() == id.toLower())
-        {
-            QStringList splitArray = b->instanceName().split('_');
-            if(splitArray.length() == 2 && splitArray[1].toInt() > max)
-                max = splitArray[1].toInt();
-        }
-    }
-    int existingComponents = getNumberOfSameBusesInScene(id);
-    if(existingComponents > max)
-        max = existingComponents;
-
-    return max + 1;
-}
-
 void SchemeEditorMainWindow::updateConnections()
 {
     foreach (QGraphicsItem *item, scene->items())
@@ -1106,13 +965,7 @@ bool SchemeEditorMainWindow::isConnectionFromPin(Connection *connection, QString
     return false;
 }
 
-QString SchemeEditorMainWindow::createUniqueInstanceName(QString name, int num = 0)
-{
-    if(num > 0)
-        return QString(name + "_" + QString::number(num).rightJustified(3,'0'));
-    else
-        return name;
-}
+
 QVector<Connection*> SchemeEditorMainWindow::getConnectionsFromScene()
 {
     QVector<Connection*> conns;
@@ -1170,30 +1023,13 @@ void SchemeEditorMainWindow::deleteConnection()
         delete connection;
 }
 
-void SchemeEditorMainWindow::dragEnterEvent(QDragEnterEvent *event)
-{
-    if (event->mimeData()->hasFormat("text/plain"))
-            event->acceptProposedAction();
-}
-void SchemeEditorMainWindow::dropEvent(QDropEvent *event)
-{
-    QString id = event->mimeData()->text();
-
-    //addComponentToScenePos(id, event->posF());
-
-       event->acceptProposedAction();
-}
-
 void SchemeEditorMainWindow::makeComponentDrag(QString id)
 {
     QDrag *drag = new QDrag(this);
     QMimeData *mime = new QMimeData;
     mime->setText(id);
     drag->setMimeData(mime);
-    ComponentView *c = createComponent(id, QPointF(0,0));
-    ui->graphicsView->setComponent(c);
-
-    Qt::DropAction dropAction = drag->exec();
+    drag->exec();
 }
 void SchemeEditorMainWindow::makeBusDrag(QString id)
 {
@@ -1201,5 +1037,5 @@ void SchemeEditorMainWindow::makeBusDrag(QString id)
     QMimeData *mime = new QMimeData;
     mime->setText(id);
     drag->setMimeData(mime);
-    drag->start();
+    drag->exec();
 }

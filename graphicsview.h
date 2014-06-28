@@ -13,29 +13,49 @@ class GraphicsView : public QGraphicsView
     Q_OBJECT
 public:
     GraphicsView(QWidget* parent = NULL);
-    void createActions();
-    ComponentView* getComponentFromScene(QString name);
 
-    ComponentView* component() { return m_component; }
+    // Getters
+    LibraryFile* library() { return m_library; }
     RegularBusView* bus() { return m_bus; }
-    void setComponent(ComponentView *component) { m_component = component; }
+    double currentScale() { return m_currentScale; }
+
+    // Setters
+    void setLibrary(LibraryFile* library) { m_library = library; }
     void setBus(RegularBusView *bus) { m_bus = bus; }
+    void setCurrentScale(double currentScale) { m_currentScale = currentScale; }
+
+    // Public methods
+    void createActions();
+
+    // Component helper methods
+    ComponentView* getComponentFromScene(QString name);
+    ComponentView* createComponent(QString id, QPointF pos);
+    int getNumberOfSameComponentsInScene(QString baseName);
+    int findComponentNameIndex(QString baseName);
+    void showEditAttribute(Attribute *attribute);
+
+
+    // Bus helper methods
+    RegularBusView *createBus(QString id, QPointF pos);
+    bool isSameBusInScene(QString id);
+    int findBusNameIndex(QString id);
+    int getNumberOfSameBusesInScene(QString id);
+
+    // General helper methods
+    QString createUniqueInstanceName(QString name, int num = 0);
 
 private:
-
+    // Members
     LibraryFile *m_library;
-
-    ComponentView *m_component;
     RegularBusView *m_bus;
+    double m_currentScale;
 
+    // Private methods
 
+    // Inherited from base class
 
-protected:
-    //Take over the interaction
     virtual void wheelEvent(QWheelEvent* event);
-    double currentScale;
-
-
+    // Drag&Drop
     void dragEnterEvent(QDragEnterEvent *event);
     void dragMoveEvent(QDragMoveEvent *event);
     void dropEvent(QDropEvent *event);

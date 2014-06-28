@@ -39,16 +39,15 @@ public:
     Messages messages;
 
     // Methods
-    ComponentModel *getComponentById(QString id);
+    ComponentModel* getComponentById(QString id);
     AutomaticBus* getAutomaticBusById(QString id);
 
     bool loadJson(QString filepath);
 
 private:
-    int randId;
     QString libraryDirPath;
 
-
+    // Method for loading from JSON
     void loadComdelHeader(QJsonArray headerLines);
     void loadAddressSpaceList(QJsonArray addressSpaces);
     void loadMessages(QJsonObject messagesObj);
@@ -65,6 +64,8 @@ private:
     void loadRulePopup(QJsonArray popupArray, RegularBusConnectionRule *rule);
     void loadRulePopupPinList(QJsonArray pinArray, RulePopup *popup);
     void loadAutomaticBusConnectionRules(QJsonArray rulesArray);
+
+    // Helper methods
     AutomaticBusConnectionRuleComponent *loadAutomaticBusConnectionRuleComponent(QJsonObject compObj);
     QColor getColor(QString colorName, bool fill = false);
     PinTypeEnum getShapeFromString(QString shapeString);

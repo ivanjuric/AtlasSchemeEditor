@@ -9,7 +9,7 @@ public:
     ToolboxButton(QWidget *parent = 0);
 
 private:
-    void mousePressEvent(QMouseEvent *e);
+    void mousePressEvent(QMouseEvent *event);
 
 };
 
