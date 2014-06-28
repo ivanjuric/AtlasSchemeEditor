@@ -36,6 +36,7 @@ public:
     void load(QDataStream &ds);
     int getNumberOfSameComponentsInScene(QString baseName);
     ComponentView *getComponentFromScene(QString instanceName);
+    RegularBusView* getRegularBusFromScene(QString instanceName);
     int findComponentNameIndex(QString baseName);
 
 
@@ -49,6 +50,7 @@ public slots:
     void deleteItem(QString instanceName);
     void editAttributes(QString instanceName);
     void clearScene();
+    void deleteConnection();
     
     void createComponentContextMenu(QString instanceName);
 
