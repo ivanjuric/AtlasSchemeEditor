@@ -1,5 +1,5 @@
 #include "componentview.h"
-#include "editorgraphicsview.h"
+#include "graphicsview.h"
 #include "libraryfile.h"
 #include "connection.h"
 #include "componentmodel.h"
@@ -54,6 +54,9 @@ public slots:
     
     void createComponentContextMenu(QString instanceName);
 
+    void makeComponentDrag(QString id);
+    void makeBusDrag(QString id);
+
 
 signals:
     void clicked(int id);
@@ -82,6 +85,9 @@ private:
     QSignalMapper *mirrorComponentSignalMapper;
     QSignalMapper *deleteItemSignalMapper;
     QSignalMapper *editAttributesSignalMapper;
+
+    QSignalMapper *dragAndDropComponentSignalMapper;
+    QSignalMapper *dragAndDropBusSignalMapper;
 
     void createContextMenus();
 
@@ -132,13 +138,14 @@ private:
     RegularBusView* createRegularBusViewFromFile(QString id, QPointF pos, QString instanceName);
     Connection* createConnectionFromFile(QString parentName1,QString pin1,QString parentName2,QString pin2,AutomaticBus *automaticBus);
 
+    ComponentView* createComponent(QString id, QPointF pos);
 protected:
     void contextMenuEvent(QContextMenuEvent *event);
 
-//    virtual void dragEnterEvent(QDragEnterEvent *event);
+    virtual void dragEnterEvent(QDragEnterEvent *event);
 //    virtual void dragLeaveEvent(QDragLeaveEvent *event);
 //    virtual void dragMoveEvent(QDragMoveEvent *event);
-//    virtual void dropEvent(QDropEvent *event);
+    virtual void dropEvent(QDropEvent *event);
 };
 
 #endif // SCHEMEEDITORMAINWINDOW_H

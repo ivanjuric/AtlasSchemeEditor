@@ -4,6 +4,7 @@
 #include "regularbusview.h"
 #include "popupnumericvalue.h"
 #include "popupenumeratedvalue.h"
+#include "toolboxbutton.h"
 
 #include <QFileDialog>
 #include <QToolButton>
@@ -18,6 +19,7 @@ SchemeEditorMainWindow::SchemeEditorMainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::SchemeEditorMainWindow)
 {
+    //setAcceptDrops(true);
     conn = 0;
     ui->setupUi(this);
     createActions();
@@ -78,36 +80,7 @@ void SchemeEditorMainWindow::selectLibrary()
 // Add selected component to graphics scene
 void SchemeEditorMainWindow::AddComponentToScene(QString id)
 {
-    ComponentModel *model = library->getComponentById(id);
-    if(model == 0)
-        return;
-
-    int numberOfSameComponents = getNumberOfSameComponentsInScene(model->instanceNameBase());
-    if(model->maxInstances() != 0 && numberOfSameComponents >= model->maxInstances())
-        return;
-
-    // Create new component and rewrite importnant properties
-    ComponentView *c = new ComponentView(model);
-    int instanceNameIndex = findComponentNameIndex(c->instanceNameBase());
-    QString instanceName = createUniqueInstanceName(c->instanceNameBase(), instanceNameIndex);
-    c->setInstanceName(instanceName);
-    c->setParentToPins();
-    foreach(PinView *pin, c->pins())
-    {
-        pin->setStartPosition();
-        pin->setFlag(QGraphicsItem::ItemIsMovable,false);
-        pin->setLabel();
-        pin->setParentItem(c);
-    }
-    c->setMirrored(false);
-    
-    foreach(Attribute *attr, c->attributes())
-    {
-        if(attr->popupType() != PopupTypeEnum::Automatic)
-            continue;
-        showEditAttribute(attr);
-    }
-    c->setPos(QPointF(0,0));
+    ComponentView *c = createComponent(id, QPointF(0,0));
     scene->addItem(c);
 }
 
@@ -133,6 +106,41 @@ ComponentView* SchemeEditorMainWindow::createComponentViewFromFile(QString id, b
         a->setCurrentValue(attributes[a->id()]);
     }
     c->setPos(pos);
+    return c;
+}
+ComponentView* SchemeEditorMainWindow::createComponent(QString id, QPointF pos)
+{
+    ComponentModel *model = library->getComponentById(id);
+    if(model == 0)
+        return 0;
+
+    int numberOfSameComponents = getNumberOfSameComponentsInScene(model->instanceNameBase());
+    if(model->maxInstances() != 0 && numberOfSameComponents >= model->maxInstances())
+        return 0;
+
+    // Create new component and rewrite importnant properties
+    ComponentView *c = new ComponentView(model);
+    int instanceNameIndex = findComponentNameIndex(c->instanceNameBase());
+    QString instanceName = createUniqueInstanceName(c->instanceNameBase(), instanceNameIndex);
+    c->setInstanceName(instanceName);
+    c->setParentToPins();
+    foreach(PinView *pin, c->pins())
+    {
+        pin->setStartPosition();
+        pin->setFlag(QGraphicsItem::ItemIsMovable,false);
+        pin->setLabel();
+        pin->setParentItem(c);
+    }
+    c->setMirrored(false);
+
+    foreach(Attribute *attr, c->attributes())
+    {
+        if(attr->popupType() != PopupTypeEnum::Automatic)
+            continue;
+        showEditAttribute(attr);
+    }
+    c->setPos(pos);
+
     return c;
 }
 
@@ -285,10 +293,17 @@ void SchemeEditorMainWindow::fillToolbar()
         actionAddFromToolbar->setIcon(getIconPixmap(c->iconFile()));
         actionAddFromToolbar->setIconText(c->id());
         actionAddFromToolbar->setIconVisibleInMenu(true);
+        ToolboxButton *btn = new ToolboxButton();
+        btn->setDefaultAction(actionAddFromToolbar);
 
         componentsSignalMapper->setMapping(actionAddFromToolbar,c->id());
         connect(actionAddFromToolbar, SIGNAL(triggered()), componentsSignalMapper, SLOT(map()));
-        ui->toolBar->addAction(actionAddFromToolbar);
+
+        dragAndDropComponentSignalMapper->setMapping(btn,c->id());
+        connect(btn, SIGNAL(pressed()), dragAndDropComponentSignalMapper, SLOT(map()));
+
+        //ui->toolBar->addAction(actionAddFromToolbar);
+        ui->toolBar->addWidget(btn);
     }
 
     ui->toolBar->addSeparator();
@@ -354,6 +369,7 @@ void SchemeEditorMainWindow::loadSceneFromFile()
     if (fname.isEmpty())
         return;
 
+    clearSceneView();
     QFile f(fname);
     f.open(QFile::ReadOnly);
     QDataStream ds(&f);
@@ -511,6 +527,14 @@ void SchemeEditorMainWindow::createActions()
     componentContextMenuSignalMapper = new QSignalMapper(this);
     connect(componentContextMenuSignalMapper, SIGNAL(mapped(QString)),this,SLOT(createComponentContextMenu(QString)));
     
+
+    // Drag signal mappers
+    dragAndDropComponentSignalMapper = new QSignalMapper(this);
+    connect(dragAndDropComponentSignalMapper, SIGNAL(mapped(QString)),this,SLOT(makeComponentDrag(QString)));
+
+    dragAndDropBusSignalMapper = new QSignalMapper(this);
+    connect(dragAndDropBusSignalMapper, SIGNAL(mapped(QString)),this,SLOT(makeBusDrag(QString)));
+
 
 
 
@@ -1146,20 +1170,36 @@ void SchemeEditorMainWindow::deleteConnection()
         delete connection;
 }
 
-//void SchemeEditorMainWindow::dragEnterEvent(QDragEnterEvent *event)
-//{
+void SchemeEditorMainWindow::dragEnterEvent(QDragEnterEvent *event)
+{
+    if (event->mimeData()->hasFormat("text/plain"))
+            event->acceptProposedAction();
+}
+void SchemeEditorMainWindow::dropEvent(QDropEvent *event)
+{
+    QString id = event->mimeData()->text();
 
-//}
-//void SchemeEditorMainWindow::dragLeaveEvent(QDragLeaveEvent *event)
-//{
+    //addComponentToScenePos(id, event->posF());
 
-//}
-//void SchemeEditorMainWindow::dragMoveEvent(QDragMoveEvent *event)
-//{
+       event->acceptProposedAction();
+}
 
-//}
-//void SchemeEditorMainWindow::dropEvent(QDropEvent *event)
-//{
+void SchemeEditorMainWindow::makeComponentDrag(QString id)
+{
+    QDrag *drag = new QDrag(this);
+    QMimeData *mime = new QMimeData;
+    mime->setText(id);
+    drag->setMimeData(mime);
+    ComponentView *c = createComponent(id, QPointF(0,0));
+    ui->graphicsView->setComponent(c);
 
-//}
-
+    Qt::DropAction dropAction = drag->exec();
+}
+void SchemeEditorMainWindow::makeBusDrag(QString id)
+{
+    QDrag *drag = new QDrag(this);
+    QMimeData *mime = new QMimeData;
+    mime->setText(id);
+    drag->setMimeData(mime);
+    drag->start();
+}

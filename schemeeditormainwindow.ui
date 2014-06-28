@@ -16,7 +16,7 @@
   <widget class="QWidget" name="centralWidget">
    <layout class="QGridLayout" name="gridLayout">
     <item row="0" column="0">
-     <widget class="EditorGraphicsView" name="graphicsView"/>
+     <widget class="GraphicsView" name="graphicsView"/>
     </item>
    </layout>
   </widget>
@@ -114,9 +114,9 @@
  <layoutdefault spacing="6" margin="11"/>
  <customwidgets>
   <customwidget>
-   <class>EditorGraphicsView</class>
+   <class>GraphicsView</class>
    <extends>QGraphicsView</extends>
-   <header>editorgraphicsview.h</header>
+   <header>graphicsview.h</header>
   </customwidget>
  </customwidgets>
  <resources>

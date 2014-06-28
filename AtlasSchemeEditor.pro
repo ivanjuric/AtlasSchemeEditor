@@ -15,7 +15,6 @@ TEMPLATE = app
 SOURCES += main.cpp\
         schemeeditormainwindow.cpp \
     libraryfile.cpp \
-    editorgraphicsview.cpp \
     componentview.cpp \
     visualcomponentelement.cpp \
     visualrectangle.cpp \
@@ -40,11 +39,12 @@ SOURCES += main.cpp\
     automaticbusconnectionrulecomponent.cpp \
     popupnumericvalue.cpp \
     attributerule.cpp \
-    popupenumeratedvalue.cpp
+    popupenumeratedvalue.cpp \
+    toolboxbutton.cpp \
+    graphicsview.cpp
 
 HEADERS  += schemeeditormainwindow.h \
     libraryfile.h \
-    editorgraphicsview.h \
     componentview.h \
     visualcomponentelement.h \
     visualrectangle.h \
@@ -70,7 +70,9 @@ HEADERS  += schemeeditormainwindow.h \
     automaticbusconnectionrulecomponent.h \
     popupnumericvalue.h \
     attributerule.h \
-    popupenumeratedvalue.h
+    popupenumeratedvalue.h \
+    toolboxbutton.h \
+    graphicsview.h
 
 FORMS    += schemeeditormainwindow.ui \
     popupnumericvalue.ui \
