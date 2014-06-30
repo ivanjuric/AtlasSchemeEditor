@@ -531,13 +531,21 @@ SchemeEditorMainWindow::~SchemeEditorMainWindow()
     delete ui;
 }
 
-QGraphicsItem* SchemeEditorMainWindow::itemAt(const QPointF &pos)
+QGraphicsItem* SchemeEditorMainWindow::itemAt(const QPointF &pos, bool select)
 {
-    QList<QGraphicsItem*> items = scene->items(QRectF(pos - QPointF(1,1), QSize(3,3)));
+    QList<QGraphicsItem*> items = scene->items(QRectF(pos, QSize(5,5)));
 
     foreach(QGraphicsItem *item, items)
+    {
         if (item->type() > QGraphicsItem::UserType)
             return item;
+        else if(select)
+        {
+            Connection *c = dynamic_cast<Connection*>(item);
+            if(c)
+                return item;
+        }
+    }
 
     return 0;
 }
@@ -587,21 +595,15 @@ bool SchemeEditorMainWindow::eventFilter(QObject *o, QEvent *e)
                 case Qt::RightButton:
                 {
                     activeItem = 0;
-                    QGraphicsItem *item = itemAt(me->scenePos());
-//                    QPointF p = me->scenePos();
-//                    Connection *co = getConnectionsFromScene()[0];
+                    QGraphicsItem *item = itemAt(me->scenePos(),true);
 
                     if (item == 0)
-                    {
-                        //item = scene->itemAt(me->scenePos(),new QTransform());
                         return false;
-                    }
 
                     QPointF pointF = me->scenePos();
                     QPoint *point = new QPoint();
                     point->setX((int)pointF.x());
                     point->setY((int)pointF.y());
-
 
                     Connection *selectedConnection = dynamic_cast<Connection*>(item);
                     if(selectedConnection || item->type() == ComponentView::Type || item->type() == RegularBusView::Type || item->type() == PinView::Type)
@@ -651,6 +653,7 @@ bool SchemeEditorMainWindow::eventFilter(QObject *o, QEvent *e)
                         conn->setPin2(pin2);
                         conn->updatePath();
                         conn = 0;
+                        scene->update();
                         return true;
                     }
                 }
@@ -1009,6 +1012,7 @@ void SchemeEditorMainWindow::deleteConnection()
     Connection *connection = dynamic_cast<Connection*>(activeItem);
     if(connection)
         delete connection;
+    scene->update();
 }
 
 void SchemeEditorMainWindow::makeComponentDrag(QString id)

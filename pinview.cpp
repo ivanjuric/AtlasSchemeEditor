@@ -34,6 +34,7 @@ PinView::PinView(PinModel *model)
     setZValue((x() + y()) % 2);
     setFlags(ItemIsMovable );
     setFlag(QGraphicsItem::ItemSendsScenePositionChanges);
+    setAcceptHoverEvents(true);
 }
 void PinView::setParentComponent(ComponentView *parentComponent)
 {
@@ -54,10 +55,6 @@ QRectF PinView::boundingRect() const
 void PinView::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
 {
     Q_UNUSED(widget);
-
-    QColor fillColor = (option->state & QStyle::State_Selected) ? lineColor().dark(150) : lineColor();
-    if (option->state & QStyle::State_MouseOver)
-         fillColor = fillColor.light(125);
 
     QPen oldPen = painter->pen();
     QPen pen = oldPen;
@@ -131,16 +128,28 @@ void PinView::drawSquare(QPainter *painter)
 {
     QPen pen(lineColor());
     pen.setJoinStyle(Qt::MiterJoin);
+    QBrush brush(fillColor(),Qt::SolidPattern);
+    if(this->isConnected())
+    {
+        pen.setColor(lineColorConnected());
+        brush.setColor(fillColorConnected());
+    }
     painter->setPen(pen);
-    painter->setBrush(QBrush(fillColor(),Qt::SolidPattern));
+    painter->setBrush(brush);
     painter->drawRect(x(),y(),width(), height());
 }
 void PinView::drawCircle(QPainter *painter)
 {
     QPen pen(lineColor());
     pen.setJoinStyle(Qt::MiterJoin);
+    QBrush brush(fillColor(),Qt::SolidPattern);
+    if(this->isConnected())
+    {
+        pen.setColor(lineColorConnected());
+        brush.setColor(fillColorConnected());
+    }
     painter->setPen(pen);
-    painter->setBrush(QBrush(fillColor(),Qt::SolidPattern));
+    painter->setBrush(brush);
     painter->drawEllipse(x(),y(),width(), height());
 }
 void PinView::drawInOut(QPainter *painter)
@@ -161,9 +170,14 @@ void PinView::drawTriangle(QPainter *painter, QPoint a, QPoint b, QPoint c)
     QPolygon poly;
     poly << a << b << c;
     QPen pen(lineColor());
-    //pen.setJoinStyle(Qt::MiterJoin);
+    QBrush brush(fillColor(),Qt::SolidPattern);
+    if(this->isConnected())
+    {
+        pen.setColor(lineColorConnected());
+        brush.setColor(fillColorConnected());
+    }
     painter->setPen(pen);
-    painter->setBrush(QBrush(fillColor(),Qt::SolidPattern));
+    painter->setBrush(brush);
     painter->drawPolygon(poly);
 }
 
@@ -233,7 +247,8 @@ QPointF PinView::centerPos(PinView *pin)
 
 void PinView::setLabel()
 {
-    label->setPlainText(this->id().toUpper());
+    if(title() != "")
+        label->setPlainText(this->title().toUpper());
     label->setFont(QFont("Arial", 5));
 
     updateLabelPosition();
@@ -282,4 +297,7 @@ void PinView::updateLabelPosition()
     }
 }
 
-
+void PinView::hoverEnterEvent(QGraphicsSceneHoverEvent *event)
+{
+    QGraphicsItem::setToolTip(tooltip());
+}

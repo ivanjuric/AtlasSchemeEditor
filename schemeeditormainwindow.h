@@ -61,7 +61,7 @@ signals:
 private:
     void createActions();
     bool isComponentInScene(int uid);
-    QGraphicsItem *itemAt(const QPointF&);
+    QGraphicsItem *itemAt(const QPointF&, bool select = false);
 
     QSignalMapper *busSignalMapper;
     QSignalMapper *contextMenuSignalMapper;

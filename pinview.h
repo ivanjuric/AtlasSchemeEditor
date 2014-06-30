@@ -125,6 +125,7 @@ private:
     int margin;
     void updatePositionAfterMirror();
     void updateLabelPosition();
+    void hoverEnterEvent(QGraphicsSceneHoverEvent *event);
 
 };
 

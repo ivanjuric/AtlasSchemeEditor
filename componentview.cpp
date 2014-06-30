@@ -64,14 +64,16 @@ void ComponentView::setDimensions()
 
         if(rect)
         {
-            if(rect->x < minL)
-                minL = rect->x;
-            if(rect->y < minU)
-                minU = rect->y;
-            if((rect->x + rect->width) > maxR)
-                maxR = rect->x + rect->width;
-            if((rect->y + rect->height) > maxD)
-                maxD = rect->y + rect->height;
+            qreal lineWidthCoef = (qreal)rect->lineThickness/2 + 0.5;
+
+            if(rect->x - lineWidthCoef < minL)
+                minL = rect->x - lineWidthCoef;
+            if(rect->y - lineWidthCoef < minU)
+                minU = rect->y - lineWidthCoef;
+            if((rect->x + rect->width + lineWidthCoef) > maxR)
+                maxR = rect->x + rect->width + lineWidthCoef;
+            if((rect->y + rect->height + lineWidthCoef) > maxD)
+                maxD = rect->y + rect->height + lineWidthCoef;
         }
         else if(text)
         {
@@ -82,14 +84,14 @@ void ComponentView::setDimensions()
         }
         else if(circle)
         {
-            if(circle->x < minL)
-                minL = circle->x;
-            if(circle->y < minU)
-                minU = circle->y;
-            if(circle->x + circle->radius > maxR)
-                maxR = circle->x + circle->radius;
-            if(circle->y + circle->radius > maxD)
-                maxD = circle->y + circle->radius;
+            if(circle->x - circle->lineThickness/2 < minL)
+                minL = circle->x - circle->lineThickness/2;
+            if(circle->y - circle->lineThickness/2 < minU)
+                minU = circle->y - circle->lineThickness/2;
+            if(circle->x + circle->radius + circle->lineThickness/2 > maxR)
+                maxR = circle->x + circle->radius + circle->lineThickness/2;
+            if(circle->y + circle->radius + circle->lineThickness/2 > maxD)
+                maxD = circle->y + circle->radius + circle->lineThickness/2;
         }
     }
 
@@ -147,6 +149,7 @@ void ComponentView::drawVisualRectangle(QPainter *painter, VisualRectangle *rect
 {
     QPen pen(rect->mainColor);
     pen.setJoinStyle(Qt::MiterJoin);
+    pen.setWidth(rect->lineThickness);
     painter->setPen(pen);
     painter->setBrush(QBrush(rect->fillColor,Qt::SolidPattern));
     painter->drawRect(rect->x,rect->y,rect->width,rect->height);
@@ -166,7 +169,9 @@ void ComponentView::drawVisualText(QPainter *painter, VisualText *text)
 
 void ComponentView::drawVisualCircle(QPainter *painter, VisualCircle *circle)
 {
-    painter->setPen(circle->mainColor);
+    QPen pen(circle->mainColor);
+    pen.setWidth(circle->lineThickness);
+    painter->setPen(pen);
     painter->setBrush(QBrush(circle->fillColor, Qt::SolidPattern));
     painter->drawEllipse(circle->x,circle->y,circle->radius, circle->radius);
 }

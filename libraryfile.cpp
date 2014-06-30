@@ -175,6 +175,7 @@ void LibraryFile::loadComponentViews(QJsonArray views, ComponentModel *component
            rectangle->height = viewObject["height"].toInt();
            QString colorName = viewObject["fillColor"].toString();
            rectangle->fillColor = QColor::isValidColor(colorName) ? QColor(colorName) : QColor(Qt::white);
+           rectangle->lineThickness = viewObject["lineThickness"].toInt();
            component->addVisualElement(rectangle);
        }
        else if(viewType == "circle")
@@ -183,6 +184,7 @@ void LibraryFile::loadComponentViews(QJsonArray views, ComponentModel *component
            circle->radius = viewObject["radius"].toInt();
            QString colorName = viewObject["fillColor"].toString();
            circle->fillColor = QColor::isValidColor(colorName) ? QColor(colorName) : QColor(Qt::white);
+           circle->lineThickness = viewObject["lineThickness"].toInt();
            component->addVisualElement(circle);
        }
        else if(viewType == "text")
