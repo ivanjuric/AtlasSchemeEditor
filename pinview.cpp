@@ -26,6 +26,7 @@ PinView::PinView(PinModel *model)
     setFillColor(model->fillColor());
     setLineColorConnected(model->lineColorConnected());
     setFillColorConnected(model->fillColorConnected());
+    setCheckConnection(model->checkConnection());
     m_parentBus = 0;
     m_parentComponent = 0;
 

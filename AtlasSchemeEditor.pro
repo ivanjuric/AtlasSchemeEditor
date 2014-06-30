@@ -41,7 +41,9 @@ SOURCES += main.cpp\
     popupenumeratedvalue.cpp \
     toolboxbutton.cpp \
     graphicsview.cpp \
-    rulecheck.cpp
+    rulecheck.cpp \
+    checkconnection.cpp \
+    automaticconnection.cpp
 
 HEADERS  += schemeeditormainwindow.h \
     libraryfile.h \
@@ -72,7 +74,9 @@ HEADERS  += schemeeditormainwindow.h \
     popupenumeratedvalue.h \
     toolboxbutton.h \
     graphicsview.h \
-    rulecheck.h
+    rulecheck.h \
+    checkconnection.h \
+    automaticconnection.h
 
 FORMS    += schemeeditormainwindow.ui \
     popupnumericvalue.ui \

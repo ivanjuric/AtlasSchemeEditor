@@ -32,6 +32,7 @@ public:
     QColor fillColor() { return m_fillColor; }
     QColor lineColorConnected() { return m_lineColorConnected; }
     QColor fillColorConnected() { return m_fillColorConnected; }
+    CheckConnection* checkConnection() { return m_checkConnection; }
 
     ComponentView *parentComponent() { return m_parentComponent; }
     RegularBusView *parentBus() { return m_parentBus; }
@@ -51,6 +52,7 @@ public:
     void setFillColor(QColor fillColor) { m_fillColor = fillColor; }
     void setLineColorConnected(QColor lineColorConnected) { m_lineColorConnected = lineColorConnected; }
     void setFillColorConnected(QColor fillColorConnected) { m_fillColorConnected = fillColorConnected; }
+    void setCheckConnection(CheckConnection *checkConnection) { m_checkConnection = checkConnection; }
 
     void setParentComponent(ComponentView *parentComponent);
     void setParentBus(RegularBusView *parentBus);
@@ -71,7 +73,7 @@ private:
     QColor m_fillColor;
     QColor m_lineColorConnected;
     QColor m_fillColorConnected;
-    QString m_checkConnection;
+    CheckConnection *m_checkConnection;
 
     ComponentView *m_parentComponent;
     RegularBusView *m_parentBus;

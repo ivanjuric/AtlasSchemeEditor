@@ -49,4 +49,10 @@ enum class RuleCheckConditionEnum
     DivisibleBy = 7,
     InRange = 8
 };
+enum class CheckConnectionTypeEnum
+{
+    CheckOnly = 1,
+    ConnectOnDemand = 2
+};
+
 #endif // ENUMS_H

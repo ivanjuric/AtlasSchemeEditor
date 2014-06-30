@@ -1,5 +1,6 @@
 #include <QtGui>
 #include "Enums.h"
+#include "checkconnection.h"
 
 #ifndef PINMODEL_H
 #define PINMODEL_H
@@ -26,6 +27,7 @@ public:
     QColor fillColor() { return m_fillColor; }
     QColor lineColorConnected() { return m_lineColorConnected; }
     QColor fillColorConnected() { return m_fillColorConnected; }
+    CheckConnection* checkConnection() { return m_checkConnection; }
 
     // Setters
     void setId(QString id) { m_id = id; }
@@ -41,6 +43,7 @@ public:
     void setFillColor(QColor fillColor) { m_fillColor = fillColor; }
     void setLineColorConnected(QColor lineColorConnected) { m_lineColorConnected = lineColorConnected; }
     void setFillColorConnected(QColor fillColorConnected) { m_fillColorConnected = fillColorConnected; }
+    void setCheckConnection(CheckConnection *checkConnection) { m_checkConnection = checkConnection; }
 
 
 private:
@@ -57,7 +60,7 @@ private:
     QColor m_fillColor;
     QColor m_lineColorConnected;
     QColor m_fillColorConnected;
-    QString m_checkConnection;
+    CheckConnection *m_checkConnection;
 };
 
 #endif // PINMODEL_H

@@ -55,6 +55,7 @@ private:
     void loadComponents(QJsonArray compArray);
     void loadComponentViews(QJsonArray views, ComponentModel *component);
     void loadComponentPins(QJsonArray pins, ComponentModel *component);
+    void loadComponentPinsCheckConnection(QJsonObject checkConnection, PinModel *pinModel);
     void loadAttributes(QJsonArray attributes, ComponentModel *component);
     void loadAttributeEnumeratedValues(QJsonArray enumeratedValues, Attribute *attribute);
     void loadRuleChecks(QJsonArray ruleValues, Attribute *attribute);
