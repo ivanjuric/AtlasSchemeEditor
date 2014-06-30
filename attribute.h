@@ -1,6 +1,6 @@
 #include <QString>
 #include "Enums.h"
-#include "attributerule.h"
+#include "rulecheck.h"
 #include <QMap>
 
 #ifndef ATTRIBUTE_H
@@ -20,7 +20,7 @@ public:
     int currentValue() { return m_currentValue; }
     QMap<QString, int> enumeratedValue() { return m_enumeratedValue; }
     bool isValueSet() { return m_isValueSet; }
-    QVector<AttributeRule*> rules() { return m_rules; }
+    QVector<RuleCheck*> rules() { return m_rules; }
 
     // Setters
     void setId(QString id) { m_id = id; }
@@ -30,7 +30,7 @@ public:
     void setDefaultValue(int defaultValue) { m_defaultValue = defaultValue; }
     void setCurrentValue(int currentValue);
     void addEnumeratedValue(QString name, int value);
-    void addRule(AttributeRule* rule);
+    void addRule(RuleCheck *rule);
 
 
 private:
@@ -42,7 +42,7 @@ private:
     int m_currentValue;
     QMap<QString, int> m_enumeratedValue;
     bool m_isValueSet;
-    QVector<AttributeRule*> m_rules;
+    QVector<RuleCheck*> m_rules;
 };
 
 #endif // ATTRIBUTE_H

@@ -26,6 +26,10 @@ void ComponentModel::addAttribute(Attribute* attribute)
 {
     m_attributes.append(attribute);
 }
+void ComponentModel::addInstantiationParameter(QString instantiationParameter)
+{
+    m_instantiationParameters.append(instantiationParameter);
+}
 
 void ComponentModel::addRectangle(VisualRectangle *rect)
 {

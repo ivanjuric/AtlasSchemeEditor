@@ -16,12 +16,10 @@ public:
 
     // Getters
     LibraryFile* library() { return m_library; }
-    RegularBusView* bus() { return m_bus; }
     double currentScale() { return m_currentScale; }
 
     // Setters
     void setLibrary(LibraryFile* library) { m_library = library; }
-    void setBus(RegularBusView *bus) { m_bus = bus; }
     void setCurrentScale(double currentScale) { m_currentScale = currentScale; }
 
     // Public methods
@@ -47,7 +45,6 @@ public:
 private:
     // Members
     LibraryFile *m_library;
-    RegularBusView *m_bus;
     double m_currentScale;
 
     // Private methods

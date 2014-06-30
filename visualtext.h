@@ -13,6 +13,7 @@ public:
     VisualText::VisualText(VisualText *text);
     ~VisualText(){}
     QString text;
+    bool showInstanceName;
 };
 
 #endif // VISUALTEXT_H

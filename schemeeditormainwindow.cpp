@@ -230,6 +230,8 @@ void SchemeEditorMainWindow::fillToolbar()
         a->setIconVisibleInMenu(true);
         ToolboxButton *btn = new ToolboxButton();
         btn->setDefaultAction(a);
+        btn->setText(c->title());
+        btn->setToolTip(c->tooltip());
 
         dragAndDropComponentSignalMapper->setMapping(btn,c->id());
         connect(btn, SIGNAL(pressed()), dragAndDropComponentSignalMapper, SLOT(map()));
@@ -248,14 +250,10 @@ void SchemeEditorMainWindow::fillToolbar()
         ToolboxButton *btn = new ToolboxButton();
         btn->setDefaultAction(a);
 
-//        busSignalMapper->setMapping(a,b->id());
-//        connect(a, SIGNAL(triggered()), busSignalMapper, SLOT(map()));
-
-        dragAndDropBusSignalMapper->setMapping(a, b->id());
+        dragAndDropBusSignalMapper->setMapping(btn, b->id());
         connect(btn, SIGNAL(pressed()),dragAndDropBusSignalMapper, SLOT(map()));
 
         ui->toolBar->addWidget(btn);
-        //ui->toolBar->addAction(a);
     }
 }
 QPixmap SchemeEditorMainWindow::getIconPixmap(QString iconFile)
@@ -267,6 +265,7 @@ QPixmap SchemeEditorMainWindow::getIconPixmap(QString iconFile)
 
     return pix;
 }
+
 
 void SchemeEditorMainWindow::clearSceneView()
 {
@@ -603,20 +602,14 @@ bool SchemeEditorMainWindow::eventFilter(QObject *o, QEvent *e)
                     point->setX((int)pointF.x());
                     point->setY((int)pointF.y());
 
-                    if((item->type() == Connection::Type || item->type() == ComponentView::Type) || item->type() == RegularBusView::Type || item->type() == PinView::Type)
+
+                    Connection *selectedConnection = dynamic_cast<Connection*>(item);
+                    if(selectedConnection || item->type() == ComponentView::Type || item->type() == RegularBusView::Type || item->type() == PinView::Type)
                     {
-                        if(item->type() == Connection::Type)
-                            activeConnection = dynamic_cast<Connection*>(item);
-                        else
-                            activeItem = item;
-                        //deleteItem(item);
+                        activeItem = item;
                         QContextMenuEvent *ev = new QContextMenuEvent(QContextMenuEvent::Mouse, *point,QCursor::pos());
                         QApplication::postEvent(this,ev);
                     }
-
-
-                    // if (selBlock == (QNEBlock*) item)
-                        // selBlock = 0;
                     break;
                 }
             }
@@ -633,27 +626,48 @@ bool SchemeEditorMainWindow::eventFilter(QObject *o, QEvent *e)
         }
         case QEvent::GraphicsSceneMouseRelease:
         {
-            if (conn && me->button() == Qt::LeftButton)
-            {
-                QGraphicsItem *item = itemAt(me->scenePos());
-                if (item && item->type() == PinView::Type)
-                {
-                    PinView *pin1 = conn->pin1();
-                    PinView *pin2 = (PinView*) item;
+            if (!(conn && me->button() == Qt::LeftButton))
+                break;
 
-                    if(!isConnectionAllowed(pin1,pin2))
+            QGraphicsItem *item = itemAt(me->scenePos());
+            if (item && item->type() == PinView::Type)
+            {
+                PinView *pin1 = conn->pin1();
+                PinView *pin2 = (PinView*) item;
+
+                if(!isConnectionAllowed(pin1,pin2))
+                {
+                    delete conn;
+                    conn = 0;
+                    return true;
+                }
+
+                // Create connection between component and bus
+                if(pin1->parentComponent() && pin2->parentBus())
+                {
+                    if(checkRegularBusRule(pin1, pin2))
                     {
-                        delete conn;
+                        conn->setPos2(pin2->centerPos((PinView*)item));
+                        conn->setPin2(pin2);
+                        conn->updatePath();
                         conn = 0;
                         return true;
                     }
-
-
-                    // Create connection between component and bus
-                    if(pin1->parentComponent() && pin2->parentBus())
+                }
+                // Create connection between two components and create automatic bus
+                else if (pin1->parentComponent() && pin2->parentComponent())
+                {
+                    QString busID = checkAutomaticBusRule(pin1,pin2);
+                    if(busID != "")
                     {
-                        if(checkRegularBusRule(pin1, pin2))
+                        AutomaticBus *a = library->getAutomaticBusById(busID);
+                        if(a)
                         {
+                            QVector<AutomaticBus*> ab = getAutomaticBusesFromScene();
+                            int num = ab.length() + 1;
+                            QString instanceName = ui->graphicsView->createUniqueInstanceName(a->id(), num);
+                            a->setInstanceName(instanceName);
+                            conn->setAutomaticBus(a);
                             conn->setPos2(pin2->centerPos((PinView*)item));
                             conn->setPin2(pin2);
                             conn->updatePath();
@@ -661,94 +675,68 @@ bool SchemeEditorMainWindow::eventFilter(QObject *o, QEvent *e)
                             return true;
                         }
                     }
-                    // Create connection between two components and create automatic bus
-                    else if (pin1->parentComponent() && pin2->parentComponent())
-                    {
-                        QString busID = checkAutomaticBusRule(pin1,pin2);
-                        if(busID != "")
-                        {
-                            AutomaticBus *a = library->getAutomaticBusById(busID);
-                            if(a)
-                            {
-                                QVector<AutomaticBus*> ab = getAutomaticBusesFromScene();
-                                int num = ab.length() + 1;
-                                QString instanceName = ui->graphicsView->createUniqueInstanceName(a->id(), num);
-                                a->setInstanceName(instanceName);
-                                conn->setAutomaticBus(a);
-                                conn->setPos2(pin2->centerPos((PinView*)item));
-                                conn->setPin2(pin2);
-                                conn->updatePath();
-                                conn = 0;
-                                return true;
-                            }
-                        }
-                    }
                 }
-
-                delete conn;
-                conn = 0;
-                return true;
             }
-            break;
+
+            delete conn;
+            conn = 0;
+            return true;
         }
     }
     return QObject::eventFilter(o, e);
 }
 void SchemeEditorMainWindow::contextMenuEvent(QContextMenuEvent *event)
 {
-    if(event->reason() == QContextMenuEvent::Mouse)
+    if(event->reason() != QContextMenuEvent::Mouse)
+        return;
+
+    ComponentView *component = dynamic_cast<ComponentView*>(activeItem);
+    if(component)
     {
+        QAction *actionMirror = new QAction(tr("&Mirror"), this);
+        mirrorComponentSignalMapper->setMapping(actionMirror, component->instanceName());
+        connect(actionMirror, SIGNAL(triggered()), mirrorComponentSignalMapper, SLOT(map()));
 
-        ComponentView *component = dynamic_cast<ComponentView*>(activeItem);
-        if(component)
-        {
-            QAction *actionMirror = new QAction(tr("&Mirror"), this);
-            mirrorComponentSignalMapper->setMapping(actionMirror, component->instanceName());
-            connect(actionMirror, SIGNAL(triggered()), mirrorComponentSignalMapper, SLOT(map()));
+        QAction *actionDeleteItem = new QAction(tr("&Delete"), this);
+        deleteItemSignalMapper->setMapping(actionDeleteItem, component->instanceName());
+        connect(actionDeleteItem, SIGNAL(triggered()), deleteItemSignalMapper, SLOT(map()));
 
-            QAction *actionDeleteItem = new QAction(tr("&Delete"), this);
-            deleteItemSignalMapper->setMapping(actionDeleteItem, component->instanceName());
-            connect(actionDeleteItem, SIGNAL(triggered()), deleteItemSignalMapper, SLOT(map()));
-
-            QAction *actionEditAttributes = new QAction(tr("&Edit attributes"), this);
-            editAttributesSignalMapper->setMapping(actionEditAttributes, component->instanceName());
-            connect(actionEditAttributes, SIGNAL(triggered()), editAttributesSignalMapper, SLOT(map()));
+        QAction *actionEditAttributes = new QAction(tr("&Edit attributes"), this);
+        editAttributesSignalMapper->setMapping(actionEditAttributes, component->instanceName());
+        connect(actionEditAttributes, SIGNAL(triggered()), editAttributesSignalMapper, SLOT(map()));
 
 
 
-            QMenu *contextMenu = new QMenu(this);
-            contextMenu->addAction(actionMirror);
-            contextMenu->addAction(actionDeleteItem);
-            contextMenu->addAction(actionEditAttributes);
-            contextMenu->exec(event->globalPos());
+        QMenu *contextMenu = new QMenu(this);
+        contextMenu->addAction(actionMirror);
+        contextMenu->addAction(actionDeleteItem);
+        contextMenu->addAction(actionEditAttributes);
+        contextMenu->exec(event->globalPos());
+    }
+
+    // Get regular bus via selected bus pin
+    PinView *busPin = dynamic_cast<PinView*>(activeItem);
+    if(busPin && busPin->parentBus())
+    {
+        QAction *actionDeleteItem = new QAction(tr("&Delete"), this);
+        deleteItemSignalMapper->setMapping(actionDeleteItem, busPin->parentInstanceName());
+        connect(actionDeleteItem, SIGNAL(triggered()), deleteItemSignalMapper, SLOT(map()));
 
 
-            //componentContextMenu->exec(event->globalPos());
-        }
-        Connection *connection = dynamic_cast<Connection*>(activeItem);
-        if(connection)
-        {
-            QAction *actionDeleteConnection = new QAction(tr("&Delete"), this);
-            connect(actionDeleteConnection, SIGNAL(triggered()), this, SLOT(deleteConnection()));
+        QMenu *contextMenu = new QMenu(this);
+        contextMenu->addAction(actionDeleteItem);
+        contextMenu->exec(event->globalPos());
+    }
 
-            QMenu *contextMenu = new QMenu(this);
-            contextMenu->addAction(actionDeleteConnection);
-            contextMenu->exec(event->globalPos());
-        }
+    Connection *connection = dynamic_cast<Connection*>(activeItem);
+    if(connection)
+    {
+        QAction *actionDeleteConnection = new QAction(tr("&Delete"), this);
+        connect(actionDeleteConnection, SIGNAL(triggered()), this, SLOT(deleteConnection()));
 
-        // Get regular bus via selected bus pin
-        PinView *busPin = dynamic_cast<PinView*>(activeItem);
-        if(busPin && busPin->parentBus())
-        {
-            QAction *actionDeleteItem = new QAction(tr("&Delete"), this);
-            deleteItemSignalMapper->setMapping(actionDeleteItem, busPin->parentInstanceName());
-            connect(actionDeleteItem, SIGNAL(triggered()), deleteItemSignalMapper, SLOT(map()));
-
-
-            QMenu *contextMenu = new QMenu(this);
-            contextMenu->addAction(actionDeleteItem);
-            contextMenu->exec(event->globalPos());
-        }
+        QMenu *contextMenu = new QMenu(this);
+        contextMenu->addAction(actionDeleteConnection);
+        contextMenu->exec(event->globalPos());
     }
 }
 
@@ -1025,17 +1013,23 @@ void SchemeEditorMainWindow::deleteConnection()
 
 void SchemeEditorMainWindow::makeComponentDrag(QString id)
 {
-    QDrag *drag = new QDrag(this);
     QMimeData *mime = new QMimeData;
     mime->setText(id);
-    drag->setMimeData(mime);
+    ComponentModel *c = library->getComponentById(id);
+
+    QDrag *drag = new QDrag(this);
+    drag->setMimeData(mime);    
+    drag->setPixmap(getIconPixmap(c->iconFile()));
     drag->exec();
 }
 void SchemeEditorMainWindow::makeBusDrag(QString id)
 {
-    QDrag *drag = new QDrag(this);
     QMimeData *mime = new QMimeData;
     mime->setText(id);
+    RegularBus *b = (RegularBus*)library->GetBusByUniqueId(id);
+
+    QDrag *drag = new QDrag(this);
     drag->setMimeData(mime);
+    drag->setPixmap(getIconPixmap(b->iconFile()));
     drag->exec();
 }

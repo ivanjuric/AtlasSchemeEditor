@@ -38,10 +38,10 @@ SOURCES += main.cpp\
     automaticbusconnectionrule.cpp \
     automaticbusconnectionrulecomponent.cpp \
     popupnumericvalue.cpp \
-    attributerule.cpp \
     popupenumeratedvalue.cpp \
     toolboxbutton.cpp \
-    graphicsview.cpp
+    graphicsview.cpp \
+    rulecheck.cpp
 
 HEADERS  += schemeeditormainwindow.h \
     libraryfile.h \
@@ -69,10 +69,10 @@ HEADERS  += schemeeditormainwindow.h \
     automaticbusconnectionrule.h \
     automaticbusconnectionrulecomponent.h \
     popupnumericvalue.h \
-    attributerule.h \
     popupenumeratedvalue.h \
     toolboxbutton.h \
-    graphicsview.h
+    graphicsview.h \
+    rulecheck.h
 
 FORMS    += schemeeditormainwindow.ui \
     popupnumericvalue.ui \

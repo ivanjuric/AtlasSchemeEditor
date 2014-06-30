@@ -154,8 +154,14 @@ void ComponentView::drawVisualRectangle(QPainter *painter, VisualRectangle *rect
 
 void ComponentView::drawVisualText(QPainter *painter, VisualText *text)
 {
+    QString textDisplay;
+    bool showInstanceName = text->showInstanceName;
+    if(showInstanceName == true)
+        textDisplay = this->instanceName();
+    else
+        textDisplay = text->text;
     painter->setPen(text->mainColor);
-    painter->drawText(QPoint(text->x,text->y), text->text);
+    painter->drawText(QPoint(text->x,text->y), textDisplay);
 }
 
 void ComponentView::drawVisualCircle(QPainter *painter, VisualCircle *circle)

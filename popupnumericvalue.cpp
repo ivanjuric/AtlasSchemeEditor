@@ -27,7 +27,7 @@ void PopupNumericValue::fillValues(bool init)
             ui->lineEdit->setText(QString::number(m_attribute->currentValue()));
     }
 }
-bool PopupNumericValue::checkAttributeRules(QString text)
+bool PopupNumericValue::checkRuleChecks(QString text)
 {
     QMessageBox msgBox;
     msgBox.setWindowTitle("Invalid input parameter");
@@ -50,7 +50,7 @@ bool PopupNumericValue::checkAttributeRules(QString text)
     }
 
     Attribute *a = m_attribute;
-    foreach (AttributeRule *rule, a->rules())
+    foreach (RuleCheck *rule, a->rules())
     {
 
     }
@@ -62,7 +62,7 @@ bool PopupNumericValue::checkAttributeRules(QString text)
 void PopupNumericValue::on_okButton_clicked()
 {
     QString text = ui->lineEdit->text();
-    if(checkAttributeRules(text))
+    if(checkRuleChecks(text))
     {
         bool ok;
         if(text.left(2) == "0x" || text.left(2) == "0X")

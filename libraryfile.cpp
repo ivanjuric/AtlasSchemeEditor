@@ -136,7 +136,11 @@ void LibraryFile::loadComponents(QJsonArray compArray)
         c->setTooltip(obj["tooltip"].toString());
         c->setMinInstances(obj["minInstances"].toInt());
         c->setMaxInstances(obj["maxInstances"].toInt());
-        c->setComdelFile(obj["COMDELfile"].toString());
+        c->setComdelFile(obj["comdelFile"].toString());
+
+        // Load instantiation parameters
+        foreach(QJsonValue s, obj["instantiationParameters"].toArray())
+            c->addInstantiationParameter(s.toString());
 
         // Load component views
         loadComponentViews(obj["view"].toArray(), c);
@@ -184,7 +188,14 @@ void LibraryFile::loadComponentViews(QJsonArray views, ComponentModel *component
        else if(viewType == "text")
        {
            VisualText *text = new VisualText(x,y,mainColor);
+           text->showInstanceName = false;
            text->text = viewObject["string"].toString();
+           component->addVisualElement(text);
+       }
+       else if(viewType == "instanceName")
+       {
+           VisualText *text = new VisualText(x,y,mainColor);
+           text->showInstanceName = true;
            component->addVisualElement(text);
        }
     }
@@ -236,7 +247,7 @@ void LibraryFile::loadAttributes(QJsonArray attributes, ComponentModel *componen
 
        QJsonArray rules = attrObject["rules"].toArray();
        if(rules.count() > 0)
-           loadAttributeRules(rules, attr);
+           loadRuleChecks(rules, attr);
 
        component->addAttribute(attr);
 
@@ -253,14 +264,14 @@ void LibraryFile::loadAttributeEnumeratedValues(QJsonArray enumeratedValues, Att
        attribute->addEnumeratedValue(name, value);
     }
 }
-void LibraryFile::loadAttributeRules(QJsonArray ruleValues, Attribute *attribute)
+void LibraryFile::loadRuleChecks(QJsonArray ruleValues, Attribute *attribute)
 {
     foreach (QJsonValue ruleVal, ruleValues)
     {
         QJsonObject ruleObject = ruleVal.toObject();
-        AttributeRule *rule = new AttributeRule();
-        rule->setType(getAttributeRuleTypeFromString(ruleObject["type"].toString()));
-        rule->setCondition(getAttributeRuleConditionFromString(ruleObject["condition"].toString()));
+        RuleCheck *rule = new RuleCheck();
+        rule->setType(getRuleCheckTypeFromString(ruleObject["type"].toString()));
+        rule->setCondition(getRuleCheckConditionFromString(ruleObject["condition"].toString()));
         foreach(QJsonValue par, ruleObject["parameters"].toArray())
         {
             rule->addParameter(par.toString());
@@ -428,35 +439,35 @@ AutomaticBusConnectionRuleComponent* LibraryFile::loadAutomaticBusConnectionRule
     return comp;
 }
 
-AttributeRuleTypeEnum LibraryFile::getAttributeRuleTypeFromString(QString type)
+RuleCheckTypeEnum LibraryFile::getRuleCheckTypeFromString(QString type)
 {
-    AttributeRuleTypeEnum t;
+    RuleCheckTypeEnum t;
     if(type.toLower() == "error")
-        t = AttributeRuleTypeEnum::Error;
+        t = RuleCheckTypeEnum::Error;
     else if(type.toLower() == "warning")
-        t = AttributeRuleTypeEnum::Warning;
+        t = RuleCheckTypeEnum::Warning;
     return t;
 }
-AttributeRuleConditionEnum LibraryFile::getAttributeRuleConditionFromString(const QString condition)
+RuleCheckConditionEnum LibraryFile::getRuleCheckConditionFromString(const QString condition)
 {
-    AttributeRuleConditionEnum c;
+    RuleCheckConditionEnum c;
 
     if(condition == "divisible_by_power_of_2")
-        c = AttributeRuleConditionEnum::DivisibleByPowerOf2;
+        c = RuleCheckConditionEnum::DivisibleByPowerOf2;
     else if(condition == "greater_or_equal")
-        c = AttributeRuleConditionEnum::GreaterOrEqual;
+        c = RuleCheckConditionEnum::GreaterOrEqual;
     else if(condition == "less_or_equal")
-        c = AttributeRuleConditionEnum::LessOrEqual;
+        c = RuleCheckConditionEnum::LessOrEqual;
     else if(condition == "unique_in_address_space")
-        c = AttributeRuleConditionEnum::UniqueInAddressSpace;
+        c = RuleCheckConditionEnum::UniqueInAddressSpace;
     else if(condition == "divisible_by")
-        c = AttributeRuleConditionEnum::DivisibleBy;
+        c = RuleCheckConditionEnum::DivisibleBy;
     else if(condition == "starts_in_address_space")
-        c = AttributeRuleConditionEnum::StartsInAddressSpace;
+        c = RuleCheckConditionEnum::StartsInAddressSpace;
     else if(condition == "ends_in_address_space")
-        c = AttributeRuleConditionEnum::EndsInAddressSpace;
+        c = RuleCheckConditionEnum::EndsInAddressSpace;
     else if(condition == "in_range")
-        c = AttributeRuleConditionEnum::InRange;
+        c = RuleCheckConditionEnum::InRange;
 
     return c;
 }

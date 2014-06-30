@@ -32,6 +32,7 @@ public:
     QString comdelDirectory;
     QVector<AddressSpace*> addressSpaceList;
     QVector<ComponentModel*> componentList;
+    QVector<QString> instantiationParameters;
     QVector<RegularBus*> regularBuses;
     QVector<AutomaticBus*> automaticBuses;
     QVector<RegularBusConnectionRule*> regularBusConnectionRules;
@@ -56,7 +57,7 @@ private:
     void loadComponentPins(QJsonArray pins, ComponentModel *component);
     void loadAttributes(QJsonArray attributes, ComponentModel *component);
     void loadAttributeEnumeratedValues(QJsonArray enumeratedValues, Attribute *attribute);
-    void loadAttributeRules(QJsonArray ruleValues, Attribute *attribute);
+    void loadRuleChecks(QJsonArray ruleValues, Attribute *attribute);
     void loadBuses(QJsonArray busList, bool regularBusType = false);
     void loadBusLines(QJsonArray busLines, Bus *bus);
     void loadBusView(QJsonObject view, RegularBus *bus);
@@ -72,8 +73,8 @@ private:
     PinSideEnum getSideFromString(QString side);
     OrientationEnum getOrientationFromString(QString orientation);
     PopupTypeEnum getPopupTypeFromString(QString popupType);
-    AttributeRuleTypeEnum getAttributeRuleTypeFromString(QString type);
-    AttributeRuleConditionEnum getAttributeRuleConditionFromString(const QString condition);
+    RuleCheckTypeEnum getRuleCheckTypeFromString(QString type);
+    RuleCheckConditionEnum getRuleCheckConditionFromString(const QString condition);
 };
 
 #endif // LIBRARYFILE_H

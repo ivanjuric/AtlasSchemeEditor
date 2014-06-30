@@ -16,9 +16,4 @@ QString AttributeRule::createErrorMessage()
 
     return "";
 }
-bool AttributeRule::check(LibraryFile *library, QGraphicsScene *scene)
-{
 
-
-    return true;
-}

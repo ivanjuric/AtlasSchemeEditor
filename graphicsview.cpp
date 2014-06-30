@@ -9,9 +9,11 @@ GraphicsView::GraphicsView(QWidget *parent) : QGraphicsView(parent)
 {
     setRenderHints(QPainter::Antialiasing);
     setAcceptDrops(true);
+    setAlignment(Qt::AlignCenter);
+    // Remove setting scene rect to enable scroll bars
+    //setSceneRect(rect());
 
     setCurrentScale(1.0);
-    setBus(0);
 }
 
 ComponentView* GraphicsView::getComponentFromScene(QString name)
@@ -219,8 +221,6 @@ void GraphicsView::dropEvent(QDropEvent *event)
         scene()->addItem(c);
     else if(b && b->id() == id)
         scene()->addItem(b);
-
-    setBus(0);
 
     event->acceptProposedAction();
 }

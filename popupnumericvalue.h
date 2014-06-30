@@ -25,7 +25,7 @@ public:
     void setComponentAttribute(Attribute *attribute) { m_attribute = attribute; }
     void setScene(QGraphicsScene *scene) { m_scene = scene;}
     void fillValues(bool init = false);
-    bool checkAttributeRules(QString text);
+    bool checkRuleChecks(QString text);
 
 
 private slots:

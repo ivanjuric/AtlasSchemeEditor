@@ -33,12 +33,12 @@ enum class PopupTypeEnum
     Automatic = 1,
     OnDemand = 2
 };
-enum class AttributeRuleTypeEnum
+enum class RuleCheckTypeEnum
 {
     Error = 1,
     Warning = 2
 };
-enum class AttributeRuleConditionEnum
+enum class RuleCheckConditionEnum
 {
     DivisibleByPowerOf2 = 1,
     GreaterOrEqual = 2,

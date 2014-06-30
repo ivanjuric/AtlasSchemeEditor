@@ -29,6 +29,7 @@ public:
     int minInstances() { return m_minInstances; }
     int maxInstances() { return m_maxInstances; }
     QString comdelFile() { return m_comdelFile; }
+    QVector<QString> instantiationParameters() { return m_instantiationParameters; }
     QVector<VisualComponentElement*> visualElements() { return m_visualElements; }
     QVector<PinModel*> pins() { return m_pins; }
     QVector<Attribute*> attributes() { return m_attributes; }
@@ -48,6 +49,7 @@ public:
     void addPin(PinModel *pin);
     void addVisualElement(VisualComponentElement *element);
     void addAttribute(Attribute* attribute);
+    void addInstantiationParameter(QString instantiationParameter);
 
 private:
     QString m_id;
@@ -58,6 +60,7 @@ private:
     int m_minInstances;
     int m_maxInstances;
     QString m_comdelFile;
+    QVector<QString> m_instantiationParameters;
     QVector<VisualComponentElement*> m_visualElements;
     QVector<PinModel*> m_pins;
     QVector<Attribute*> m_attributes;

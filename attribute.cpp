@@ -15,7 +15,7 @@ void Attribute::setCurrentValue(int currentValue)
     m_currentValue = currentValue;
     m_isValueSet = true;
 }
-void Attribute::addRule(AttributeRule* rule)
+void Attribute::addRule(RuleCheck* rule)
 {
     m_rules.append(rule);
 }
