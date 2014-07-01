@@ -228,7 +228,7 @@ void LibraryFile::loadComponentPins(QJsonArray pins, ComponentModel *component)
         pin->setFillColor(getColor(pinViewObject["fillColor"].toString()));
         pin->setFillColorConnected(getColor(pinViewObject["fillColorConnected"].toString()));
 
-        loadComponentPinsCheckConnection(pinObject["check_connection"].toObject(), pin);
+        loadComponentPinsCheckConnection(pinObject["checkConnection"].toObject(), pin);
         component->addPin(pin);
     }
 }
@@ -238,20 +238,25 @@ void LibraryFile::loadComponentPinsCheckConnection(QJsonObject checkConnection, 
 
     QString typeString = checkConnection["type"].toString();
     CheckConnectionTypeEnum type;
-    if(typeString == "connect_on_demand")
-        type = CheckConnectionTypeEnum::ConnectOnDemand;
-    else if(typeString == "check_only")
+
+    if(typeString == "checkOnly")
         type = CheckConnectionTypeEnum::CheckOnly;
+    else if(typeString == "connectOnDemand")
+        type = CheckConnectionTypeEnum::ConnectOnDemand;
+    else if(typeString == "connectIfUnconnected")
+        type = CheckConnectionTypeEnum::ConnectIfUnconnected;
+    else if(typeString == "connectImmediately")
+        type = CheckConnectionTypeEnum::ConnectImmediately;
 
     cc->setType(type);
     cc->setMessage(checkConnection["message"].toString());
 
-    QJsonObject autoConn = checkConnection["automatic_connection"].toObject();
+    QJsonObject autoConn = checkConnection["automaticConnection"].toObject();
     if(!autoConn.isEmpty())
     {
         AutomaticConnection *automaticConnection = new AutomaticConnection();
-        automaticConnection->setPopupOptionConnect(autoConn["popup_option_connect"].toString());
-        automaticConnection->setPopupOptionContinue(autoConn["popup_option_continue"].toString());
+        automaticConnection->setPopupOptionConnect(autoConn["popupOptionConnect"].toString());
+        automaticConnection->setPopupOptionContinue(autoConn["popupOptionContinue"].toString());
         automaticConnection->setContextMenuItemText(autoConn["contextMenuItemText"].toString());
         automaticConnection->setAutomaticBus(autoConn["automaticBus"].toString());
         foreach(QJsonValue pin, autoConn["pinInstantiationList"].toArray())

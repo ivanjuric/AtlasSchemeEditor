@@ -52,7 +52,9 @@ enum class RuleCheckConditionEnum
 enum class CheckConnectionTypeEnum
 {
     CheckOnly = 1,
-    ConnectOnDemand = 2
+    ConnectOnDemand = 2,
+    ConnectIfUnconnected = 3,
+    ConnectImmediately = 4
 };
 
 #endif // ENUMS_H
