@@ -42,6 +42,9 @@ public:
     // General helper methods
     QString createUniqueInstanceName(QString name, int num = 0);
 
+    void zoom(bool zoomIn = true);
+    void zoomReset();
+
 private:
     // Members
     LibraryFile *m_library;

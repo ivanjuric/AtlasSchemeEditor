@@ -32,7 +32,7 @@ PinView::PinView(PinModel *model)
 
     label = new QGraphicsTextItem(this);
     margin = 2;
-    setZValue((x() + y()) % 2);
+    setZValue(2);
     setFlags(ItemIsMovable );
     setFlag(QGraphicsItem::ItemSendsScenePositionChanges);
     setAcceptHoverEvents(true);
@@ -214,13 +214,13 @@ QPointF* PinView::getStartPosition()
     QPointF *point = new QPointF();
     if(side() == PinSideEnum::Left)
     {
-        point->setX(parentComponent()->x() - x() - width());
-        point->setY(parentComponent()->y() + y());
+        point->setX(parentComponent()->x() - width());
+        point->setY(parentComponent()->y());
     }
     else if(side() == PinSideEnum::Right)
     {
-        point->setX(parentComponent()->x() + parentComponent()->width() + x());
-        point->setY(parentComponent()->y() + y());
+        point->setX(parentComponent()->x() + parentComponent()->width());
+        point->setY(parentComponent()->y());
     }
     else
     {

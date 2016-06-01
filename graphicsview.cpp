@@ -10,8 +10,6 @@ GraphicsView::GraphicsView(QWidget *parent) : QGraphicsView(parent)
     setRenderHints(QPainter::Antialiasing);
     setAcceptDrops(true);
     setAlignment(Qt::AlignCenter);
-    // Remove setting scene rect to enable scroll bars
-    //setSceneRect(rect());
 
     setCurrentScale(1.0);
 }
@@ -229,13 +227,18 @@ void GraphicsView::wheelEvent(QWheelEvent* event)
 {
     setTransformationAnchor(QGraphicsView::AnchorUnderMouse);
 
+    zoom(event->delta() > 0);
+
+}
+
+void GraphicsView::zoom(bool zoomIn)
+{
     // Scale the view / do the zoom
     double scaleFactor = 1.15;
     const double minFactor = 0.5;
     const double maxFactor = 4.0;
-    if(event->delta() > 0)
+    if(zoomIn)
     {
-        // Zoom in
         if(currentScale() <= maxFactor)
         {
             setCurrentScale(currentScale() * scaleFactor);
@@ -244,12 +247,17 @@ void GraphicsView::wheelEvent(QWheelEvent* event)
     }
     else
     {
-        // Zooming out
         if(currentScale() >= minFactor)
         {
             setCurrentScale(currentScale() / scaleFactor);
             scale(1.0 / scaleFactor, 1.0 / scaleFactor);
         }
     }
+}
+
+void GraphicsView::zoomReset()
+{
+    scale(1.0 / currentScale(), 1.0 / currentScale());
+    setCurrentScale(1.0);
 }
 

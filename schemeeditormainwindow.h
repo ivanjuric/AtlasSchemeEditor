@@ -39,7 +39,7 @@ public:
 
 
 public slots:
-    void selectLibrary();
+
     void saveSceneToFile();
     void loadSceneFromFile();
     void AddBusToScene(QString id);
@@ -60,6 +60,7 @@ signals:
 
 private:
     void createActions();
+    void setEditorWindowTitle(QString libraryName);
     bool isComponentInScene(int uid);
     QGraphicsItem *itemAt(const QPointF&, bool select = false);
 
@@ -131,6 +132,15 @@ private:
 
 protected:
     void contextMenuEvent(QContextMenuEvent *event);
+private slots:
+    void selectLibrary();
+    void on_actionSelectLibrary_triggered();
+    void on_actionSave_triggered();
+    void on_actionLoad_triggered();
+    void on_actionClearScene_triggered();
+    void on_actionZoomIn_triggered();
+    void on_actionZoomOut_triggered();
+    void on_actionFitToScene_triggered();
 };
 
 #endif // SCHEMEEDITORMAINWINDOW_H

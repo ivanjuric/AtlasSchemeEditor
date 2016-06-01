@@ -29,15 +29,7 @@ SchemeEditorMainWindow::SchemeEditorMainWindow(QWidget *parent) :
     scene->installEventFilter(this);
     ui->graphicsView->setScene(scene);
 
-    //temp
-    QString filePath = "C:\\Users\\Ivan\\Desktop\\FRISC_LIBRARY_SIMPLE.json";
-    library = new LibraryFile();
-    library->loadJson(filePath);
-    ui->graphicsView->setLibrary(library);
-    fillToolbar();
-
     createContextMenus();
-
 }
 
 void SchemeEditorMainWindow::createContextMenus()
@@ -64,6 +56,8 @@ void SchemeEditorMainWindow::createContextMenus()
 void SchemeEditorMainWindow::selectLibrary()
 {
     QString fileName = QFileDialog::getOpenFileName(this,tr("Open config file"),"",tr("Config JSON file (*.json)"));
+    if(fileName == "")
+        return;
 
     library = new LibraryFile();
     if(library->loadJson(fileName))
@@ -72,9 +66,18 @@ void SchemeEditorMainWindow::selectLibrary()
         clearSceneView();
         ui->toolBar->clear();
         fillToolbar();
-        this->setWindowTitle(library->libraryTitle);
+        setEditorWindowTitle(library->libraryTitle);
     }
 }
+void SchemeEditorMainWindow::setEditorWindowTitle(QString libraryName)
+{
+    QString title = "Atlas Scheme Editor";
+    if(libraryName != "")
+        title = libraryName + " - " + title;
+
+    setWindowTitle(title);
+}
+
 ComponentView* SchemeEditorMainWindow::createComponentViewFromFile(QString id, bool mirrored, QString instanceName, QPointF pos, QMap<QString,int> attributes)
 {
     ComponentModel *model = library->getComponentById(id);
@@ -222,6 +225,7 @@ Connection* SchemeEditorMainWindow::createConnectionFromFile(QString parentName1
 
 void SchemeEditorMainWindow::fillToolbar()
 {
+    //ui->toolBar->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
     foreach (ComponentModel *c, library->componentList)
     {
         QAction *a = new QAction(this);
@@ -232,6 +236,7 @@ void SchemeEditorMainWindow::fillToolbar()
         btn->setDefaultAction(a);
         btn->setText(c->title());
         btn->setToolTip(c->tooltip());
+        btn->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
 
         dragAndDropComponentSignalMapper->setMapping(btn,c->id());
         connect(btn, SIGNAL(pressed()), dragAndDropComponentSignalMapper, SLOT(map()));
@@ -249,6 +254,11 @@ void SchemeEditorMainWindow::fillToolbar()
         a->setIconVisibleInMenu(true);
         ToolboxButton *btn = new ToolboxButton();
         btn->setDefaultAction(a);
+
+        btn->setDefaultAction(a);
+        btn->setText(b->id());
+        btn->setToolTip(b->tooltip());
+        btn->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
 
         dragAndDropBusSignalMapper->setMapping(btn, b->id());
         connect(btn, SIGNAL(pressed()),dragAndDropBusSignalMapper, SLOT(map()));
@@ -493,17 +503,17 @@ void SchemeEditorMainWindow::createActions()
     busSignalMapper = new QSignalMapper(this);
     connect(busSignalMapper, SIGNAL(mapped(QString)),this,SLOT(AddBusToScene(QString)));
 
-    connect(ui->actionSelectLibrary, SIGNAL(triggered()), this, SLOT(selectLibrary()));
-    ui->mainToolBar->addAction(ui->actionSelectLibrary);
+//    connect(ui->actionSelectLibrary, SIGNAL(triggered()), this, SLOT(selectLibrary()));
+//    ui->mainToolBar->addAction(ui->actionSelectLibrary);
 
-    connect(ui->actionSave, SIGNAL(triggered()), this, SLOT(saveSceneToFile()));
-    ui->mainToolBar->addAction(ui->actionSave);
+//    connect(ui->actionSave, SIGNAL(triggered()), this, SLOT(saveSceneToFile()));
+//    ui->mainToolBar->addAction(ui->actionSave);
 
-    connect(ui->actionLoad, SIGNAL(triggered()), this, SLOT(loadSceneFromFile()));
-    ui->mainToolBar->addAction(ui->actionLoad);
+//    connect(ui->actionLoad, SIGNAL(triggered()), this, SLOT(loadSceneFromFile()));
+//    ui->mainToolBar->addAction(ui->actionLoad);
 
-    connect(ui->actionClearScene, SIGNAL(triggered()), this, SLOT(clearScene()));
-    ui->mainToolBar->addAction(ui->actionClearScene);
+//    connect(ui->actionClearScene, SIGNAL(triggered()), this, SLOT(clearScene()));
+//    ui->mainToolBar->addAction(ui->actionClearScene);
 }
 
 void SchemeEditorMainWindow::createComponentContextMenu(QString instanceName)
@@ -584,12 +594,6 @@ bool SchemeEditorMainWindow::eventFilter(QObject *o, QEvent *e)
 
                         return true;
                     }
-                    else if (item->type() == ComponentView::Type)
-                    {
-                        /* if (selBlock)
-                            selBlock->setSelected(); */
-                        // selBlock = (QNEBlock*) item;
-                    }
                     break;
                 }
                 case Qt::RightButton:
@@ -600,10 +604,8 @@ bool SchemeEditorMainWindow::eventFilter(QObject *o, QEvent *e)
                     if (item == 0)
                         return false;
 
-                    QPointF pointF = me->scenePos();
-                    QPoint *point = new QPoint();
-                    point->setX((int)pointF.x());
-                    point->setY((int)pointF.y());
+                    QPointF p = me->scenePos().toPoint();
+                    QPoint *point = new QPoint(p.x(), p.y());
 
                     Connection *selectedConnection = dynamic_cast<Connection*>(item);
                     if(selectedConnection || item->type() == ComponentView::Type || item->type() == RegularBusView::Type || item->type() == PinView::Type)
@@ -1023,7 +1025,7 @@ void SchemeEditorMainWindow::makeComponentDrag(QString id)
 
     QDrag *drag = new QDrag(this);
     drag->setMimeData(mime);    
-    drag->setPixmap(getIconPixmap(c->iconFile()));
+    drag->setPixmap(getIconPixmap(c->iconFile()).scaled(64,64,Qt::KeepAspectRatio));
     drag->exec();
 }
 void SchemeEditorMainWindow::makeBusDrag(QString id)
@@ -1034,6 +1036,41 @@ void SchemeEditorMainWindow::makeBusDrag(QString id)
 
     QDrag *drag = new QDrag(this);
     drag->setMimeData(mime);
-    drag->setPixmap(getIconPixmap(b->iconFile()));
+    drag->setPixmap(getIconPixmap(b->iconFile()).scaled(64,64,Qt::KeepAspectRatio));
     drag->exec();
+}
+
+void SchemeEditorMainWindow::on_actionSelectLibrary_triggered()
+{
+    selectLibrary();
+}
+
+void SchemeEditorMainWindow::on_actionSave_triggered()
+{
+    saveSceneToFile();
+}
+
+void SchemeEditorMainWindow::on_actionLoad_triggered()
+{
+    loadSceneFromFile();
+}
+
+void SchemeEditorMainWindow::on_actionClearScene_triggered()
+{
+    clearScene();
+}
+
+void SchemeEditorMainWindow::on_actionZoomIn_triggered()
+{
+    ui->graphicsView->zoom();
+}
+
+void SchemeEditorMainWindow::on_actionZoomOut_triggered()
+{
+    ui->graphicsView->zoom(false);
+}
+
+void SchemeEditorMainWindow::on_actionFitToScene_triggered()
+{
+    ui->graphicsView->zoomReset();
 }

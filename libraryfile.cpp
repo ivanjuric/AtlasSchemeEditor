@@ -379,8 +379,8 @@ void LibraryFile::loadBusLines(QJsonArray busLines, Bus *bus)
 
         // Fill with optional fields
         line->setType(lineObject["type"].toString());
-        line->setTerminateWith(lineObject["terminate_with"].toInt());
-        line->setIfUnterminated(lineObject["if_unterminated"].toInt());
+        line->setTerminateWith(lineObject["terminateWith"].toInt());
+        line->setIfUnterminated(lineObject["ifUnterminated"].toInt());
 
         bus->addBusLine(line);
     }
@@ -497,21 +497,21 @@ RuleCheckConditionEnum LibraryFile::getRuleCheckConditionFromString(const QStrin
 {
     RuleCheckConditionEnum c;
 
-    if(condition == "divisible_by_power_of_2")
+    if(condition == "divisibleByPowerOf2")
         c = RuleCheckConditionEnum::DivisibleByPowerOf2;
-    else if(condition == "greater_or_equal")
+    else if(condition == "greaterOrEqual")
         c = RuleCheckConditionEnum::GreaterOrEqual;
-    else if(condition == "less_or_equal")
+    else if(condition == "lessOrEqual")
         c = RuleCheckConditionEnum::LessOrEqual;
-    else if(condition == "unique_in_address_space")
+    else if(condition == "uniqueInAddressSpace")
         c = RuleCheckConditionEnum::UniqueInAddressSpace;
-    else if(condition == "divisible_by")
+    else if(condition == "divisibleBy")
         c = RuleCheckConditionEnum::DivisibleBy;
-    else if(condition == "starts_in_address_space")
+    else if(condition == "startsInAddressSpace")
         c = RuleCheckConditionEnum::StartsInAddressSpace;
-    else if(condition == "ends_in_address_space")
+    else if(condition == "endsInAddressSpace")
         c = RuleCheckConditionEnum::EndsInAddressSpace;
-    else if(condition == "in_range")
+    else if(condition == "inRange")
         c = RuleCheckConditionEnum::InRange;
 
     return c;
@@ -578,7 +578,7 @@ PopupTypeEnum LibraryFile::getPopupTypeFromString(QString popupType)
     PopupTypeEnum type = (PopupTypeEnum)0;
     if(popupType.toLower() == "automatic")
         type = PopupTypeEnum::Automatic;
-    else if(popupType.toLower() == "on_demand")
+    else if(popupType.toLower() == "onDemand")
         type = PopupTypeEnum::OnDemand;
 
     return type;

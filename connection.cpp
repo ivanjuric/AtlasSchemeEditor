@@ -67,8 +67,6 @@ void Connection::updatePath()
     QPointF ctr1(m_pos1.x() + dx * 0.25, m_pos1.y() + dy * 0.1);
     QPointF ctr2(m_pos1.x() + dx * 0.75, m_pos1.y() + dy * 0.9);
 
-//    ctr1.setX(ctr1.x() + 10);
-//    ctr2.setX(ctr2.x() + 10);
     p.cubicTo(ctr1, ctr2, m_pos2);
 
     setPath(p);

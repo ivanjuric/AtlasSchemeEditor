@@ -1,5 +1,18 @@
 <RCC>
     <qresource prefix="/">
-        <file>images/open-file-icon.png</file>
+        <file>images/Books-icon.png</file>
+        <file>images/Cabinet-icon.png</file>
+        <file>images/Delete-icon.png</file>
+        <file>images/Error-icon.png</file>
+        <file>images/Exclamation-icon.png</file>
+        <file>images/Folder-Documents-icon.png</file>
+        <file>images/Folder-Open-icon.png</file>
+        <file>images/Save-icon.png</file>
+        <file>images/Search-File-icon.png</file>
+        <file>images/Search-icon.png</file>
+        <file>images/theme-editor-icon.png</file>
+        <file>images/Tools-icon.png</file>
+        <file>images/Zoom-In-icon.png</file>
+        <file>images/Zoom-Out-icon.png</file>
     </qresource>
 </RCC>

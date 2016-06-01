@@ -24,7 +24,6 @@ public:
     void updatePath();
 
     enum { Type = QGraphicsItem::UserType + 2 };
-    //enum { Type = QGraphicsPathItem::UserType + 2} ;
 
     QPointF pos1() { return m_pos1; }
     QPointF pos2() { return m_pos2; }

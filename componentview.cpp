@@ -40,7 +40,7 @@ ComponentView::ComponentView(ComponentModel *model)
 
     setDimensions();
 
-    setZValue((x() + y()) % 2);
+    setZValue(2);
     setFlags(ItemIsSelectable | ItemIsMovable);
 }
 void ComponentView::setParentToPins()
@@ -214,7 +214,7 @@ void ComponentView::load(QDataStream &ds, QMap<quint64, PinView*> &pinMap)
     {
         quint64 ptr;
 
-        ds >> (quint64) ptr;
+        ds >> ptr;
         //PinView *p = (PinView*)ptr;
         //PinView *pin = new PinView();
 

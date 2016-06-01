@@ -10,7 +10,7 @@ class VisualCircle  : public VisualComponentElement
 {
 public:
     VisualCircle(int x, int y, QColor color);
-    VisualCircle::VisualCircle(VisualCircle *circle);
+    VisualCircle(VisualCircle *circle);
     ~VisualCircle(){}
     int radius;
     QColor fillColor;

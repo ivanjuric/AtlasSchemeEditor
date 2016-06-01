@@ -30,7 +30,7 @@ RegularBusView::RegularBusView(RegularBus *model)
     m_label = new QGraphicsTextItem(this);
     setLabel();
     fillBusPins();
-    setZValue(-1);
+    setZValue(1);
     setFlags(ItemIsSelectable | ItemIsMovable);
 }
 
@@ -39,7 +39,8 @@ void RegularBusView::fillBusPins()
     double ratio = lineLength()/lineThickness();
     int numberOfPins = (int)ratio;
     int remainingPinLength = lineLength() - lineThickness() * numberOfPins;
-    QColor color = Qt::yellow;
+    //QColor color = Qt::yellow;
+    QColor color = lineColor();
     int a = lineThickness();
     QString finalPinId = QString::number(busPins().length());
 

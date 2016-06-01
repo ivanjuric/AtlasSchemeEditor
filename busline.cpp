@@ -15,9 +15,9 @@ void BusLine::setType(QString type)
     if(type.isNull() || type.isEmpty())
         return;
 
-    if(type == "wired and")
+    if(type == "wiredAnd")
         busType = BusType::WiredAnd;
-    else if(type == "wired or")
+    else if(type == "wiredOr")
         busType = BusType::WiredOr;
     else
         return;

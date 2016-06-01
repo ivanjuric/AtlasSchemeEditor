@@ -26,13 +26,13 @@ public:
     QString createErrorMessage();
 
     // Attribute rule checks
-    bool RuleCheck::checkDivisibleByPowerOf2(QVector<QString> paramters);
-    bool RuleCheck::checkGreaterOrEqual(QVector<QString> paramters);
-    bool RuleCheck::checkLessOrEqual(QVector<QString> paramters);
-    bool RuleCheck::checkStartsInAddressSpace(QVector<QString> paramters);
-    bool RuleCheck::checkEndsInAddressSpace(QVector<QString> paramters);
-    bool RuleCheck::checkDivisibleBy(QVector<QString> paramters);
-    bool RuleCheck::checkInRange(QVector<QString> paramters);
+    bool checkDivisibleByPowerOf2(QVector<QString> paramters);
+    bool checkGreaterOrEqual(QVector<QString> paramters);
+    bool checkLessOrEqual(QVector<QString> paramters);
+    bool checkStartsInAddressSpace(QVector<QString> paramters);
+    bool checkEndsInAddressSpace(QVector<QString> paramters);
+    bool checkDivisibleBy(QVector<QString> paramters);
+    bool checkInRange(QVector<QString> paramters);
 
 
 private:
