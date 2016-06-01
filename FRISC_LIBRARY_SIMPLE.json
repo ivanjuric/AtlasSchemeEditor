@@ -1,0 +1,893 @@
+{
+	"libraryTitle": "Jednostavni FRISC",
+	"libraryInfo": " Ova biblioteka omogućuje kreiranje sustava s procesorom FRISC s pojednostavljenim načinom spajanja bez potrebe da se spajaju pojedine linije sabirnice.",
+	"comdelHeader": [
+		"\/\/ COMDEL datoteka stvorena pomocu biblioteke \"jednostavni FRISC\"",
+		"",
+		"set const_width 32;"
+	],
+	"comdelDirectory": "libraries\\frisc\\vjezba1",
+	"addressSpaceList": [
+		{
+			"ID": "glavni AS",
+			"min": "0",
+			"max": "0xFFFFFFFF"
+		},
+		{
+			"ID": "pomocni AS",
+			"min": "0xFFFF0000",
+			"max": "0xFFFFFFFF"
+		}
+	],
+	"messages": {
+		"OK": "OK",
+		"Yes": "Da",
+		"No": "Ne",
+		"Cancel": "Otkaži",
+		"noneBusLine": "nespojen",
+		"noneValue": "ništa",
+		"generalPinNotConnected": "Opći pin nije spojen niti na jednu sabirnicu"
+	},
+	"componentList": [
+		{
+			"ID": "FRISC",
+			"title": "FRISC",
+			"instanceNameBase": "procesor",
+			"iconFile": "direktorij\\FRISC.ico",
+			"tooltip": "procesor FRISC, mora postojati jedan",
+			"attributes": null,
+			"instantiationParameters": null,
+			"minInstances": 1,
+			"maxInstances": 1,
+			"comdelFile": "FRISC.cdl",
+			"view": [
+				{
+					"viewType": "rectangle",
+					"x": 0,
+					"y": 0,
+					"mainColor": "black",
+					"width": 100,
+					"height": 100,
+					"lineThickness": 2
+				},
+				{
+					"viewType": "rectangle",
+					"x": 2,
+					"y": 2,
+					"mainColor": "blue",
+					"width": 96,
+					"height": 96,
+					"lineThickness": 1
+				},
+				{
+					"viewType": "text",
+					"x": 20,
+					"y": 20,
+					"mainColor": "black",
+					"string": "FRISC"
+				},
+				{
+					"viewType": "instanceName",
+					"x": 20,
+					"y": 40,
+					"mainColor": "black"
+				}
+			],
+			"visualPinList": [
+				{
+					"ID": "glavni pin",
+					"tooltip": "pin za spajanje na glavnu sabirnicu",
+					"title": null,
+					"view": {
+						"shape": "InOut",
+						"x": 100,
+						"y": 50,
+						"fillColor": "white",
+						"lineColor": "red",
+						"fillColorConnected": "white",
+						"lineColorConnected": "black",
+						"side":"left",
+						"dimension":20
+					},
+					"check_connection": {
+						"type": "check_only",
+						"message": "COMDEL se ne može stvoriti. FRISC nije spojen na sabirnicu",
+						"automatic_connection": null
+					}
+				}
+			]
+		},
+		{
+			"ID": "Memorija",
+			"title": "Memorija",
+			"instanceNameBase": "memorija",
+			"iconFile": "direktorij\\mem.ico",
+			"tooltip": "Memorijska komponenta, mora postojati barem jedna",
+			"minInstances": 1,
+			"maxInstances": 0,
+			"comdelFile": "memory.cdl",
+			"attributes": [
+				{
+					"ID": "kapacitet",
+					"title": "Kapacitet memorije",
+					"popupText": "Zadajte kapacitet memorije u bajtovima",
+					"popup": "automatic",
+					"default": 65536,
+					"rules": [
+						{
+							"type": "error",
+							"condition": "divisible_by_power_of_2",
+							"parameters": [
+								"kapacitet"
+							],
+							"errorMessage": "Kapacitet memorije u komponenti @componentInstanceName@ nije djeljiv s potencijom broja 2"
+						},
+						{
+							"type": "error",
+							"condition": "greater_or_equal",
+							"parameters": [
+								"kapacitet",
+								"1024"
+							],
+							"errorMessage": "Kapacitet memorije u komponenti @componentInstanceName@ je premali (minimum je 1024)"
+						},
+						{
+							"type": "error",
+							"condition": "less_or_equal",
+							"parameters": [
+								"kapacitet",
+								"1048576"
+							],
+							"errorMessage": "Kapacitet memorije u komponenti @componentInstanceName@ je @attributValue@ a mora biti manji od 1048576 (1MB)"
+						},
+						{
+							"type": "warning",
+							"condition": "greater_or_equal",
+							"parameters": [
+								"kapacitet",
+								"0x10000"
+							],
+							"errorMessage": "Želite li zaista memoriju veću od 65536 bajtova?"
+						}
+					]
+				},
+				{
+					"ID": "pocetna adresa",
+					"title": "Početna adresa memorije",
+					"popupText": "Zadajte početnu adresu memorije",
+					"popup": "automatic",
+					"default": 0,
+					"rules": [
+						{
+							"type": "error",
+							"condition": "starts_in_address_space",
+							"parameters": [
+								"pocetna adresa",
+								"glavni AS"
+							],
+							"errorMessage": "Početna adresa memorije u komponenti @componentInstanceName@ je izvan 32 bitnog adresnog prostora"
+						}
+					]
+				}
+			],
+			"instantiationParameters": [
+				"kapacitet",
+				"8",
+				"pocetna adresa"
+			],
+			"rules": [
+				{
+					"type": "error",
+					"condition": "ends_in_address_space",
+					"parameters": [
+						"pocetna adresa",
+						"kapacitet",
+						"glavni AS"
+					],
+					"errorMessage": "Završna adresa memorije u komponenti @componentInstanceName@ je izvan 32 bitnog adresnog prostora"
+				},
+				{
+					"type": "error",
+					"condition": "unique_in_address_space",
+					"parameters": [
+						"pocetna adresa",
+						"kapacitet",
+						"glavni AS"
+					],
+					"errorMessage": "Adrese memorije u komponenti @componentInstanceName@ nisu jedinstvene u adresnom prostoru (preklapaju se s nekom drugom komponentom)"
+				},
+				{
+					"type": "error",
+					"condition": "divisible_by",
+					"parameters": [
+						"pocetna adresa",
+						"kapacitet"
+					],
+					"errorMessage": "Početna adresa memorije u komponenti @componentInstanceName@ mora biti višekratnik kapaciteta memorije"
+				}
+			],
+			"view": [
+				{
+					"viewType": "rectangle",
+					"x": 0,
+					"y": 0,
+					"width": 100,
+					"height": 50,
+					"mainColor": "black",
+					"lineThickness": 2
+				},
+				{
+					"viewType": "text",
+					"x": 20,
+					"y": 20,
+					"mainColor": "black",
+					"string": "Memorija"
+				}
+			],
+			"visualPinList": [
+				{
+					"ID": "glavni pin",
+					"tooltip": "pin za spajanje na glavnu sabirnicu",
+					"title": null,
+					"view": {
+						"shape": "SquareInOut",
+						"x": 100,
+						"y": 25,
+						"fillColor": "blue",
+						"lineColor": "red",
+						"fillColorConnected": "white",
+						"lineColorConnected": "black",
+						"side":"right",
+						"dimension":20
+					},
+					"check_connection": {
+						"type": "check_only",
+						"message": "COMDEL se ne može stvoriti. Memorija nije spojena na sabirnicu",
+						"automatic_connection": null
+					}
+				}
+			]
+		},
+		{
+			"ID": "DMA",
+			"title": "DMA",
+			"instanceNameBase": "dma",
+			"iconFile": "direktorij\\dma.ico",
+			"tooltip": "DMA-kontroler",
+			"minInstances": 0,
+			"maxInstances": 0,
+			"comdelFile": "dma.cdl",
+			"attributes": [
+				{
+					"ID": "pocetna adresa",
+					"title": "Početna adresa DMA-kontrolera",
+					"popupText": "Zadajte početnu adresu DMA-kontrolera",
+					"popup": "automatic",
+					"default": 0,
+					"rules": [
+						{
+							"type": "error",
+							"condition": "starts_in_address_space",
+							"parameters": [
+								"pocetna adresa",
+								"pomocni AS"
+							],
+							"errorMessage": "Početna adresa DMA-kontrolera u komponenti @componentInstanceName@ je izvan adresnog prostora za UI-jedinice"
+						},
+						{
+							"type": "error",
+							"condition": "ends_in_address_space",
+							"parameters": [
+								"pocetna adresa",
+								"32",
+								"pomocni AS"
+							],
+							"errorMessage": "Završna adresa DMA-kontrolera u komponenti @componentInstanceName@ je izvan adresnog prostora za UI-jedinice"
+						},
+						{
+							"type": "error",
+							"condition": "divisible_by",
+							"parameters": [
+								"pocetna adresa",
+								"32"
+							],
+							"errorMessage": "Početna adresa DMA-kontrolera u komponenti @componentInstanceName@ mora biti višekratnik broja 32"
+						}
+					]
+				}
+			],
+			"instantiationParameters": [
+				"pocetna adresa"
+			],
+			"rules": [
+				{
+					"type": "error",
+					"condition": "unique_in_address_space",
+					"parameters": [
+						"pocetna adresa",
+						"32",
+						"pomocni AS"
+					],
+					"errorMessage": "Adrese DMA-kontrolera u komponenti @componentInstanceName@ nisu jedinstvene u adresnom prostoru (preklapaju se s nekom drugom komponentom)"
+				}
+			],
+			"view": [
+				{
+					"viewType": "rectangle",
+					"x": 0,
+					"y": 0,
+					"width": 100,
+					"height": 100,
+					"mainColor": "black",
+					"lineThickness": 1
+				},
+				{
+					"viewType": "text",
+					"x": 20,
+					"y": 20,
+					"mainColor": "black",
+					"string": "DMA"
+				}
+			],
+			"visualPinList": [
+				{
+					"ID": "glavni pin",
+					"tooltip": "pin za spajanje na glavnu sabirnicu",
+					"title": null,
+					"view": {
+						"shape": "SquareIn",
+						"x": 100,
+						"y": 50,
+						"fillColor": "red",
+						"lineColor": "black",
+						"fillColorConnected": "white",
+						"lineColorConnected": "black",
+						"side":"left",
+						"dimension":20
+					},
+					"check_connection": {
+						"type": "check_only",
+						"message": "COMDEL se ne može stvoriti. DMA nije spojen na sabirnicu",
+						"automatic_connection": null
+					}
+				}
+			]
+		},
+		{
+			"ID": "PIO",
+			"title": "PIO",
+			"instanceNameBase": "pio",
+			"iconFile": "direktorij\\pio.ico",
+			"tooltip": "Vanjska jedinica PIO za paralelni prijenos podataka",
+			"minInstances": 0,
+			"maxInstances": 0,
+			"comdelFile": "pio.cdl",
+			"attributes": [
+				{
+					"ID": "pocetna adresa",
+					"title": "Početna adresa sklopa PIO",
+					"popupText": "Zadajte početnu adresu sklopa PIO",
+					"popup": "automatic",
+					"default": 0,
+					"rules": [
+						{
+							"type": "error",
+							"condition": "starts_in_address_space",
+							"parameters": [
+								"pocetna adresa",
+								"pomocni AS"
+							],
+							"errorMessage": "Početna adresa sklopa PIO u komponenti @componentInstanceName@ je izvan adresnog prostora za UI-jedinice"
+						},
+						{
+							"type": "error",
+							"condition": "ends_in_address_space",
+							"parameters": [
+								"pocetna adresa",
+								"16",
+								"pomocni AS"
+							],
+							"errorMessage": "Završna adresa sklopa PIO u komponenti @componentInstanceName@ je izvan adresnog prostora za UI-jedinice"
+						},
+						{
+							"type": "error",
+							"condition": "divisible_by",
+							"parameters": [
+								"pocetna adresa",
+								"16"
+							],
+							"errorMessage": "Početna adresa sklopa PIO u komponenti @componentInstanceName@ mora biti višekratnik broja 16"
+						}
+					]
+				}
+			],
+			"instantiationParameters": [
+				"pocetna adresa"
+			],
+			"rules": [
+				{
+					"type": "error",
+					"condition": "unique_in_address_space",
+					"parameters": [
+						"pocetna adresa",
+						"16",
+						"pomocni AS"
+					],
+					"errorMessage": "Adrese sklopa PIO u komponenti @componentInstanceName@ nisu jedinstvene u adresnom prostoru (preklapaju se s nekom drugom komponentom)"
+				}
+			],
+			"view": [
+				{
+					"viewType": "rectangle",
+					"x": 0,
+					"y": 0,
+					"width": 100,
+					"height": 50,
+					"lineColor": "black",
+					"lineThickness": 2
+				},
+				{
+					"viewType": "text",
+					"x": 20,
+					"y": 20,
+					"textColor": "black",
+					"string": "PIO"
+				}
+			],
+			"visualPinList": [
+				{
+					"ID": "glavni pin",
+					"tooltip": "pin za spajanje na glavnu sabirnicu",
+					"title": null,
+					"view": {
+						"shape": "square",
+						"x": 100,
+						"y": 25,
+						"fillColor": "green",
+						"lineColor": "red",
+						"fillColorConnected": "white",
+						"lineColorConnected": "black",
+						"side":"right",
+						"dimension":20
+					},
+					"check_connection": {
+						"type": "check_only",
+						"message": "COMDEL se ne može stvoriti. PIO nije spojen na sabirnicu",
+						"automatic_connection": null
+					}
+				},
+				{
+					"ID": "IO pin",
+					"title": "port",
+					"tooltip": "pin za izravno spajanje na uređaj",
+					"view": {
+						"shape": "circle",
+						"x": 0,
+						"y": 50,
+						"fillColor": "blue",
+						"lineColor": "red",
+						"fillColorConnected": "white",
+						"lineColorConnected": "black",
+						"side":"left",
+						"dimension":20
+					},
+					"check_connection": {
+						"type": "connect_on_demand",
+						"message": "Port PIO sklopa nije nigdje spojen. Želite li da se port spoji automatski?",
+						"automatic_connection": {
+							"popup_option_connect": "Da, spoji port i stvori COMDEL",
+							"popup_option_continue": "Ne, nastavi sa crtanjem",
+							"contextMenuItemText": "Spoji port automatski",
+							"automaticBus": "PIO sabirnica",
+							"pinInstantiationList": [
+								null,
+								null,
+								null,
+								null,
+								null,
+								null,
+								null,
+								"PIO_DATA",
+								"READY",
+								"STROBE"
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"ID": "Termometar",
+			"title": "Termometar",
+			"instanceNameBase": "termometar",
+			"iconFile": "direktorij\\termo.ico",
+			"tooltip": "Uređaj za mjerenje temperature",
+			"minInstances": 0,
+			"maxInstances": 0,
+			"comdelFile": "termometar.cdl",
+			"attributes": [
+				{
+					"ID": "nacin promjene",
+					"title": "način promjene temperature",
+					"popupText": "Odaberite način promjene temperature",
+					"enumerated": [
+						{
+							"text": "Stohastički",
+							"value": 1
+						},
+						{
+							"text": "Valovito",
+							"value": 5
+						}
+					],
+					"popup": "on_demand",
+					"default": 5,
+					"rules": null
+				},
+				{
+					"ID": "brzina",
+					"title": "Brzina promjene temperature u ciklusima",
+					"popupText": "Zadajte brzinu promjene temperature u ciklusima",
+					"popup": "on_demand",
+					"default": 10000,
+					"rules": [
+						{
+							"type": "error",
+							"condition": "in_range",
+							"parameters": [
+								"brzina",
+								"1000",
+								"100000"
+							],
+							"errorMessage": "Brzina promjene mora biti između 1000 i 100000"
+						}
+					]
+				},
+				{
+					"ID": "min temp",
+					"title": "Najmanja temperatura",
+					"popupText": "Zadajte najmanju temperaturu",
+					"popup": "on_demand",
+					"default": 0,
+					"rules": [
+						{
+							"type": "error",
+							"condition": "in_range",
+							"parameters": [
+								"min temp",
+								"0",
+								"255"
+							],
+							"errorMessage": "Najmanja temperatura mora biti između 0 i 255"
+						}
+					]
+				},
+				{
+					"ID": "max temp",
+					"title": "Najveća temperatura",
+					"popupText": "Zadajte najveću temperaturu",
+					"popup": "on_demand",
+					"default": 255,
+					"rules": [
+						{
+							"type": "error",
+							"condition": "in_range",
+							"parameters": [
+								"max temp",
+								"0",
+								"255"
+							],
+							"errorMessage": "Najveća temperatura mora biti između 0 i 255"
+						}
+					]
+				}
+			],
+			"instantiationParameters": [
+				"min temp",
+				"max temp",
+				"brzina",
+				"nacin promjene"
+			],
+			"rules": [
+				{
+					"type": "error",
+					"condition": "less_or_equal",
+					"parameters": [
+						"min temp",
+						"max temp"
+					],
+					"errorMessage": "Minimalna temperatura mora biti manja ili jednaka od maksimalne temperature"
+				}
+			],
+			"view": [
+				{
+					"viewType": "circle",
+					"x": 0,
+					"y": 0,
+					"radius": 100,
+					"mainColor": "black",
+					"lineThickness": 2
+				},
+				{
+					"viewType": "text",
+					"x": 20,
+					"y": 50,
+					"mainColor": "black",
+					"string": "Temp"
+				}
+			],
+			"visualPinList": [
+				{
+					"ID": "Termometar output",
+					"title": "na port",
+					"tooltip": "pin za izravno spajanje na PIO",
+					"view": {
+						"shape": "circle",
+						"x": 200,
+						"y": 40,
+						"fillColor": "yellow",
+						"lineColor": "red",
+						"fillColorConnected": "white",
+						"lineColorConnected": "black",
+						"side":"right",
+						"dimension":10
+					},
+					"check_connection": {
+						"type": "check_only",
+						"message": "COMDEL se ne može stvoriti. Termometar nije spojen na PIO",
+						"automatic_connection": null
+					}
+				}
+			]
+		}
+	],
+	"regularBusList": [
+		{
+			"ID": "glavna sabirnica",
+			"iconFile": "direktorij\\bus.ico",
+			"title": "glavna sabirnica",
+			"tooltip": "sabirnica za spajanje FRISC a s memorijama i UI/jedinicama",
+			"view": {
+				"lineOrientation": "horizontal",
+				"lineLength": 300,
+				"lineThickness": 20,
+				"lineColor": "black"
+			},
+			"minInstances": 1,
+			"maxInstances": 1,
+			"selectionList": null,
+			"busLines": [
+				{
+					"ID": "ADR",
+					"size": 32
+				},
+				{
+					"ID": "DATA",
+					"size": 32
+				},
+				{
+					"ID": "READ",
+					"size": 0
+				},
+				{
+					"ID": "WRITE",
+					"size": 0
+				},
+				{
+					"ID": "WAIT",
+					"size": 0,
+					"type": "wired and",
+					"terminate_with": 1
+				},
+				{
+					"ID": "INT0",
+					"size": 0,
+					"type": "wired and",
+					"terminate_with": 1
+				},
+				{
+					"ID": "INT1",
+					"size": 0,
+					"type": "wired and",
+					"terminate_with": 1
+				},
+				{
+					"ID": "INT2",
+					"size": 0,
+					"type": "wired and",
+					"terminate_with": 1
+				},
+				{
+					"ID": "INT3",
+					"size": 0,
+					"type": "wired and",
+					"terminate_with": 1
+				},
+				{
+					"ID": "SIZE",
+					"size": 3
+				},
+				{
+					"ID": "IACK",
+					"size": 0
+				},
+				{
+					"ID": "BREQ",
+					"size": 0,
+					"if_unterminated": 1
+				},
+				{
+					"ID": "BACK",
+					"size": 0
+				}
+			]
+		}
+	],
+	"automaticBusList": [
+		{
+			"ID": "PIO sabirnica",
+			"busLines": [
+				{
+					"ID": "PIO_DATA",
+					"size": 8
+				},
+				{
+					"ID": "READY",
+					"size": 0
+				},
+				{
+					"ID": "STROBE",
+					"size": 0,
+					"if_unterminated": 0
+				}
+			]
+		}
+	],
+	"regularBusConnectionRules": [
+		{
+			"component": "FRISC",
+			"componentVisualPin": "glavni pin",
+			"bus": "glavna sabirnica",
+			"pinInstantiationList": [
+				"ADR",
+				"DATA",
+				"READ",
+				"WRITE",
+				"SIZE",
+				"WAIT",
+				"INT0",
+				"INT1",
+				"INT2",
+				"INT3",
+				"IACK",
+				"BREQ",
+				"BACK"
+			]
+		},
+		{
+			"component": "Memorija",
+			"componentVisualPin": "glavni pin",
+			"bus": "glavna sabirnica",
+			"pinInstantiationList": [
+				"ADR",
+				"DATA",
+				"READ",
+				"WRITE",
+				"SIZE",
+				"WAIT"
+			]
+		},
+		{
+			"component": "DMA",
+			"componentVisualPin": "glavni pin",
+			"bus": "glavna sabirnica",
+			"popup": [
+				{
+					"ID": "INT DMA",
+					"contextMenuItem": "prespoji INT",
+					"open": "automatic",
+					"message": "Odaberite sabirničku liniju na koju želite spojiti priključak INT od skopa DMA",
+					"pinHeaderText": null,
+					"busLineHeaderText": null,
+					"pinList": [
+						{
+							"ID": "prekid",
+							"title": "INT",
+							"busLineList": [
+								"INT0",
+								"INT1",
+								"INT2",
+								"INT3",
+								"none"
+							],
+							"default": "INT0"
+						}
+					]
+				}
+			],
+			"pinInstantiationList": [
+				"ADR",
+				"DATA",
+				"READ",
+				"WRITE",
+				"SIZE",
+				"WAIT",
+				"popup",
+				"INT DMA",
+				"prekid",
+				"BREQ",
+				"BACK"
+			],
+			"connectionTerminates": [
+				"BREQ"
+			]
+		},
+		{
+			"component": "PIO",
+			"componentVisualPin": "glavni pin",
+			"bus": "glavna sabirnica",
+			"popup": [
+				{
+					"ID": "INT PIO",
+					"contextMenuItem": "prespoji INT",
+					"open": "on_demand",
+					"message": "Odaberite sabirničku liniju na koju želite spojiti priključak INT od sklopa PIO",
+					"pinHeaderText": null,
+					"busLineHeaderText": null,
+					"pinList": [
+						{
+							"ID": "prekidna",
+							"title": "INT",
+							"busLineList": [
+								"INT0",
+								"INT1",
+								"INT2",
+								"INT3",
+								"none"
+							],
+							"default": "none"
+						}
+					]
+				}
+			],
+			"pinInstantiationList": [
+				"ADR",
+				"DATA",
+				"READ",
+				"WRITE",
+				"SIZE",
+				"WAIT",
+				"popup",
+				"INT PIO",
+				"prekidna",
+				null,
+				null,
+				null
+			]
+		}
+	],
+	"automaticBusConnectionRules": [
+		{
+			"automaticBus": "PIO sabirnica",
+			"1st_component": "PIO",
+			"1st_componentVisualPin": "IO pin",
+			"1st_pinInstantiationList": [
+				null,
+				null,
+				null,
+				null,
+				null,
+				null,
+				null,
+				"PIO_DATA",
+				"READY",
+				"STROBE"
+			],
+			"2nd_component": "Termometar",
+			"2nd_componentVisualPin": "Termometar output",
+			"2nd_pinInstantiationList": [
+				"PIO_DATA"
+			]
+		}
+	]
+}
